@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run src/dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis_data:

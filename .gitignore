@@ -1,0 +1,23 @@
+venv/
+.env
+data/raw/
+data/processed/
+data/models/
+data/logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+artifacts/
+
+# Local/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Test and build outputs
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
