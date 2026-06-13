@@ -1,4 +1,4 @@
-﻿"""Signals page â€” detailed signal table + regime overlay."""
+﻿“””Signals page — detailed signal table + regime overlay.”””
 from __future__ import annotations
 
 import sys as _sys
@@ -78,7 +78,7 @@ def render():
         pass
 
     # Current signal banner
-    sig_label = {1: "â–² LONG", 0: "â€” FLAT", -1: "â–¼ SHORT"}.get(live_sig, "â€”")
+    sig_label = {1: “▲ LONG”, 0: “— FLAT”, -1: “▼ SHORT”}.get(live_sig, “—“)
     sig_color = {1: GREEN, 0: AMBER, -1: RED}.get(live_sig, AMBER)
     st.markdown(
         f'<div style="background:{SURFACE};border-left:4px solid {sig_color};'
@@ -91,7 +91,7 @@ def render():
 
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.plotly_chart(signal_overlay(close, signals, title=f"{selected} â€” Price & Signals"),
+        st.plotly_chart(signal_overlay(close, signals, title=f”{selected} — Price & Signals”),
                         use_container_width=True)
         st.plotly_chart(regime_timeline(regime), use_container_width=True)
     with col2:

@@ -1,4 +1,4 @@
-﻿"""Backtest results page â€” WFO fold performance, metrics table."""
+﻿“””Backtest results page — WFO fold performance, metrics table.”””
 from __future__ import annotations
 
 import sys as _sys
@@ -106,10 +106,11 @@ def render():
                 return ""
 
         sharpe_col = "Sharpe" if "Sharpe" in fold_data.columns else fold_data.columns[2]
-        st.dataframe(
-            fold_data.style.applymap(color_sharpe, subset=[sharpe_col]),
-            use_container_width=True, hide_index=True,
-        )
+        try:
+            styled = fold_data.style.map(color_sharpe, subset=[sharpe_col])
+        except AttributeError:
+            styled = fold_data.style.applymap(color_sharpe, subset=[sharpe_col])
+        st.dataframe(styled, use_container_width=True, hide_index=True)
 
         if sharpe_col in fold_data.columns:
             sharpes = pd.to_numeric(fold_data[sharpe_col], errors="coerce").dropna()
@@ -126,7 +127,7 @@ def render():
             n = len(fold_data)
             col4.metric("Win Folds", f"{(sharpes > 1.0).sum()}/{n}")
 
-    # Equity curve chart â€” real benchmark data
+    # Equity curve chart — real benchmark data
     st.subheader("SPY Benchmark Equity Curve")
     spy_r = _load_equity_for_ticker("SPY")
     if spy_r is not None and len(spy_r) > 10:

@@ -1,4 +1,4 @@
-﻿"""Settings page â€” configuration viewer."""
+﻿“””Settings page — configuration viewer.”””
 from __future__ import annotations
 
 import sys as _sys
@@ -27,7 +27,7 @@ def render():
     for source in ["alpaca", "newsapi", "fred", "sec"]:
         has_key = source in sources
         color = "#00E676" if has_key else "#FF1744"
-        label = "âœ“ Configured" if has_key else "âœ— Not configured"
+        label = “✓ Configured” if has_key else “✗ Not configured”
         st.markdown(
             f'<div style="font-family:Consolas;font-size:12px">'
             f'<span style="color:{AMBER}">{source.upper()}</span> '

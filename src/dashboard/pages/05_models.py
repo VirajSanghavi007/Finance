@@ -1,4 +1,4 @@
-﻿"""Models page â€” per-model performance, feature importance."""
+﻿“””Models page — per-model performance, feature importance.”””
 from __future__ import annotations
 
 import sys as _sys
@@ -98,7 +98,7 @@ def render():
         # Show known model names as placeholders
         model_stats = pd.DataFrame({
             "Model":   ["XGBoost", "LightGBM", "RandomForest", "LSTM", "TCN", "PatchTST", "PPO"],
-            "Sharpe":  ["â€”"] * 7,
+            “Sharpe”:  [“—“] * 7,
             "Status":  ["not trained"] * 7,
         })
         st.dataframe(model_stats, use_container_width=True, hide_index=True)

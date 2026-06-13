@@ -1,4 +1,4 @@
-﻿"""Explainability page â€” SHAP, drift monitor, audit log."""
+﻿“””Explainability page — SHAP, drift monitor, audit log.”””
 from __future__ import annotations
 
 import sys as _sys
@@ -69,7 +69,7 @@ def _get_shap_values(ticker: str = "SPY") -> pd.DataFrame | None:
 
         fi      = rf.get_feature_importance().nlargest(10)
         last_x  = X.iloc[-1]
-        # Pseudo-SHAP: importance Ã— (feature_value - feature_mean) / feature_std
+        # Pseudo-SHAP: importance × (feature_value - feature_mean) / feature_std
         means   = X.mean()
         stds    = X.std().replace(0, 1)
         z_score = (last_x - means) / stds
@@ -106,13 +106,17 @@ def render():
             else:
                 st.success("No significant feature drift detected.")
 
-            st.dataframe(
-                drift_data.style.applymap(
+            try:
+                styled = drift_data.style.map(
                     lambda v: f"color:{RED}" if v else f"color:{GREEN}",
                     subset=["Drifted"],
-                ),
-                use_container_width=True, hide_index=True,
-            )
+                )
+            except AttributeError:
+                styled = drift_data.style.applymap(
+                    lambda v: f"color:{RED}" if v else f"color:{GREEN}",
+                    subset=["Drifted"],
+                )
+            st.dataframe(styled, use_container_width=True, hide_index=True)
         else:
             st.info("Download data first: `python scripts/fetch_data.py`")
 

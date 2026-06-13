@@ -41,10 +41,12 @@ def deflated_sharpe_ratio(
 
     sr_hat = mean_r / std_r          # non-annualized SR
     skew   = float(returns.skew())
-    kurt   = float(returns.kurt())   # excess kurtosis
+    kurt   = float(returns.kurt())   # excess kurtosis (pandas default)
 
-    # Variance of SR estimator under non-normality
-    var_sr = (1.0 - skew * sr_hat + (kurt / 4.0) * sr_hat ** 2) / T
+    # Variance of SR estimator (Bailey & López de Prado 2014, Eq. 7).
+    # Formula uses *standard* kurtosis γ₄ = excess_kurt + 3.
+    # Substituting: (γ₄ − 1)/4 = (excess_kurt + 3 − 1)/4 = (excess_kurt + 2)/4
+    var_sr = (1.0 - skew * sr_hat + ((kurt + 2.0) / 4.0) * sr_hat ** 2) / T
     if var_sr <= 0:
         return 0.0
     std_sr = math.sqrt(var_sr)

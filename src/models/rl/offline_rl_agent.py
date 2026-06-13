@@ -171,19 +171,23 @@ class OfflineRLAgent(BaseModel):
         if n_states < self.batch_size:
             return {"status": "insufficient_data", "n_states": n_states}
 
-        # Actions from y_train labels (shifted to align with states window)
-        y_aligned = y_train.iloc[self.seq_len - 1:].map(LABEL_MAP).fillna(1).values[:n_states]
+        # Actions from y_train labels (shifted to align with states window).
+        # y_train may be shorter than X_train — use the minimum to guarantee alignment.
+        y_tail   = y_train.iloc[self.seq_len - 1:].map(LABEL_MAP).fillna(1)
+        n_states = min(n_states, len(y_tail))   # enforce consistent length
+        states   = states[:n_states]
+        y_aligned = y_tail.values[:n_states]
         actions   = y_aligned.astype(np.int64)
 
-        # Rewards from y_train returns (target_ret_1d column or fallback)
+        # Rewards from aligned returns
         if "target_ret_1d" in X_train.columns:
             rets = X_train["target_ret_1d"].fillna(0).iloc[self.seq_len - 1:].values[:n_states]
         else:
             rets = np.sign(y_aligned - 1) * 0.001   # tiny proxy reward
         rewards = self._compute_rewards(actions, rets.astype(np.float32))
 
-        # Next states
-        next_states = np.vstack([states[1:], states[-1:]])
+        # Next states — terminal state gets zero vector (no bootstrapping at end)
+        next_states = np.vstack([states[1:], np.zeros_like(states[-1:])])
 
         S  = torch.tensor(states,      dtype=torch.float32)
         A  = torch.tensor(actions,     dtype=torch.long)

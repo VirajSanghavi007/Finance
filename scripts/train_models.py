@@ -22,11 +22,18 @@ configure_logging()
 logger = get_logger("train_models")
 
 
+def _get_target(feat_df: pd.DataFrame) -> pd.Series:
+    """Prefer triple-barrier label; fall back to naive sign(return)."""
+    if "target_tb" in feat_df.columns:
+        return feat_df["target_tb"].fillna(0).astype(int)
+    return feat_df["target_1d"].fillna(0).astype(int)
+
+
 def _split(feat_df: pd.DataFrame, test_frac: float = 0.15):
     split = int(len(feat_df) * (1 - test_frac))
     feat_cols = get_feature_columns(feat_df)
     X = feat_df[feat_cols].fillna(0)
-    y = feat_df["target_1d"].fillna(0).astype(int)
+    y = _get_target(feat_df)
     return X.iloc[:split], y.iloc[:split], X.iloc[split:], y.iloc[split:]
 
 
@@ -36,7 +43,7 @@ def train_ticker(ticker: str, register: bool, registry: ModelRegistry) -> dict:
         logger.warning("insufficient_data", ticker=ticker, rows=0 if feat_df is None else len(feat_df))
         return {}
 
-    if "target_1d" not in feat_df.columns:
+    if "target_tb" not in feat_df.columns and "target_1d" not in feat_df.columns:
         logger.warning("no_target_col", ticker=ticker)
         return {}
 

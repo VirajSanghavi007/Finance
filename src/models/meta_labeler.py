@@ -102,8 +102,8 @@ class MetaLabeler:
         (the meta-model can learn "when is XGBoost confident AND right?").
         """
         X_aug = X.copy()
+        X_aug.columns = X_aug.columns.astype(str)  # sklearn requires homogeneous column name types
         if primary_signals is not None:
-            X_aug = X_aug.copy()
             X_aug["_primary_signal"] = primary_signals.reindex(X.index).fillna(0)
 
         self._feature_names = list(X_aug.columns)
@@ -149,6 +149,7 @@ class MetaLabeler:
         if self._model is None:
             return np.ones(len(X)) * 0.5
         X_aug = X.copy()
+        X_aug.columns = X_aug.columns.astype(str)
         if "_primary_signal" not in X_aug.columns and "_primary_signal" in self._feature_names:
             X_aug["_primary_signal"] = 0.0
         # Only use columns the model was trained on

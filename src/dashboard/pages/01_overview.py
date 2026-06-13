@@ -1,4 +1,4 @@
-﻿"""Overview page â€” portfolio summary + active signals."""
+﻿“””Overview page — portfolio summary + active signals.”””
 from __future__ import annotations
 
 import sys as _sys

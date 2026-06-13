@@ -30,9 +30,11 @@ def simple_signal_backtest(feat_df: pd.DataFrame, ticker: str) -> dict:
     from src.models.classical.random_forest import RandomForestModel
     from src.backtest.costs import transaction_cost
 
-    feat_cols  = get_feature_columns(feat_df)
+    feat_cols = get_feature_columns(feat_df)
     X = feat_df[feat_cols].fillna(0)
-    y = feat_df["target_1d"].fillna(0).astype(int)
+    # Prefer triple-barrier label (better signal quality); fall back to naive sign
+    target_col = "target_tb" if "target_tb" in feat_df.columns else "target_1d"
+    y = feat_df[target_col].fillna(0).astype(int)
 
     # Walk-forward: train on first 70%, test on last 30%
     split      = int(len(X) * 0.70)

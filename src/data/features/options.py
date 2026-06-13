@@ -100,9 +100,9 @@ def _compute_chain_features(chain: dict, current_price: float) -> dict:
     otm_put_strike  = current_price * 0.90
     otm_call_strike = current_price * 1.10
 
-    otm_put  = puts [(puts ["strike"] - otm_put_strike ).abs().idxmin()] \
+    otm_put  = puts .iloc[(puts ["strike"] - otm_put_strike ).abs().values.argmin()] \
                if len(puts)  > 0 else None
-    otm_call = calls[(calls["strike"] - otm_call_strike).abs().idxmin()] \
+    otm_call = calls.iloc[(calls["strike"] - otm_call_strike).abs().values.argmin()] \
                if len(calls) > 0 else None
 
     if otm_put is not None and otm_call is not None:
