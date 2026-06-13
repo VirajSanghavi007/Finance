@@ -9,6 +9,7 @@ import pandas as pd
 from src.models.base import BaseModel, ModelPrediction
 from src.models.ensemble.stacker import StackingEnsemble
 from src.models.ensemble.regime_router import RegimeRouter
+from src.models.ensemble.conformal import ConformalPredictor
 from src.config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -41,11 +42,12 @@ class EnsembleModel:
         models: dict[str, BaseModel],
         config: EnsembleConfig | None = None,
     ) -> None:
-        self._models  = models
-        self._config  = config or EnsembleConfig(model_names=list(models.keys()))
-        self._stacker = StackingEnsemble()
-        self._router  = RegimeRouter()
-        self._stacker_fitted = False
+        self._models    = models
+        self._config    = config or EnsembleConfig(model_names=list(models.keys()))
+        self._stacker   = StackingEnsemble()
+        self._router    = RegimeRouter()
+        self._conformal = ConformalPredictor(alpha=0.10)
+        self._stacker_fitted   = False
 
     # ------------------------------------------------------------------
     def fit_stacker(
@@ -55,6 +57,26 @@ class EnsembleModel:
     ) -> None:
         self._stacker.fit(oof_probas, y_true)
         self._stacker_fitted = True
+
+    def calibrate_conformal(
+        self,
+        X_calib: "pd.DataFrame",
+        y_calib: np.ndarray,
+        regime_series: np.ndarray | None = None,
+    ) -> None:
+        """
+        Calibrate conformal predictor on a held-out calibration set.
+
+        Call this ONCE after walk-forward training, before live deployment.
+        y_calib should be integer labels in {0, 1, 2} (mapped from {-1, 0, +1}).
+        """
+        calib_proba = self.predict_proba(X_calib, regime_series)
+        self._conformal.calibrate(calib_proba, y_calib)
+        logger.info(
+            "conformal_calibrated",
+            threshold=f"{self._conformal.threshold:.4f}",
+            n_calib=len(y_calib),
+        )
 
     # ------------------------------------------------------------------
     def predict_proba(
@@ -121,10 +143,29 @@ class EnsembleModel:
         X: pd.DataFrame,
         regime_series: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return (signals, confidences)."""
+        """
+        Return (signals, calibrated_confidences).
+
+        If conformal predictor is calibrated, uses split-conformal prediction
+        sets for statistically valid coverage. Abstains (signal=0) when the
+        prediction set is ambiguous (size > 1). Otherwise falls back to raw
+        softmax argmax with min_confidence gating.
+        """
         proba = self.predict_proba(X, regime_series)
-        best_class  = np.argmax(proba, axis=1)
-        confidence  = proba[np.arange(len(proba)), best_class]
+
+        if self._conformal.is_fitted:
+            signals, confidence = self._conformal.predict_scalar(
+                proba, abstain_on_uncertainty=True
+            )
+            # Apply minimum confidence gate on top of conformal abstention
+            signals = np.where(
+                confidence >= self._config.min_confidence, signals, 0
+            )
+            return signals, confidence
+
+        # Fallback: raw softmax
+        best_class = np.argmax(proba, axis=1)
+        confidence = proba[np.arange(len(proba)), best_class]
         signals = np.where(
             confidence >= self._config.min_confidence,
             np.array([LABEL_UNMAP[int(c)] for c in best_class]),

@@ -9,6 +9,58 @@ import pandas as pd
 TRADING_DAYS = 252
 
 
+def deflated_sharpe_ratio(
+    returns: pd.Series,
+    n_trials: int = 1,
+    benchmark_sharpe: float = 0.0,
+) -> float:
+    """
+    Deflated Sharpe Ratio (Bailey & López de Prado, 2014).
+
+    Corrects for:
+      1. Multiple-testing bias — penalises strategies selected from N_trials
+      2. Non-normality — skewness and excess kurtosis of returns
+
+    Returns probability ∈ [0,1] that the true SR exceeds the expected
+    maximum under the null of N_trials independent draws.
+    Values > 0.95 indicate statistical significance.
+    """
+    try:
+        from scipy.stats import norm
+    except ImportError:
+        return 0.0
+
+    T = len(returns)
+    if T < 30:
+        return 0.0
+
+    mean_r = float(returns.mean())
+    std_r  = float(returns.std())
+    if std_r == 0:
+        return 0.0
+
+    sr_hat = mean_r / std_r          # non-annualized SR
+    skew   = float(returns.skew())
+    kurt   = float(returns.kurt())   # excess kurtosis
+
+    # Variance of SR estimator under non-normality
+    var_sr = (1.0 - skew * sr_hat + (kurt / 4.0) * sr_hat ** 2) / T
+    if var_sr <= 0:
+        return 0.0
+    std_sr = math.sqrt(var_sr)
+
+    # Expected maximum SR under N_trials (from extreme value theory)
+    if n_trials > 1:
+        expected_max_z = norm.ppf(1.0 - 1.0 / n_trials)
+        sr_expected    = expected_max_z * std_sr
+    else:
+        # Compare against benchmark Sharpe (converted to daily)
+        sr_expected = benchmark_sharpe / math.sqrt(TRADING_DAYS)
+
+    z_score = (sr_hat - sr_expected) / std_sr
+    return float(norm.cdf(z_score))
+
+
 def _sharpe(returns: pd.Series, rf_daily: float) -> float:
     excess = returns - rf_daily
     std = excess.std()
@@ -145,8 +197,11 @@ def compute_all_metrics(
                 else:
                     sharpe_side = val
 
+    dsr = deflated_sharpe_ratio(returns, n_trials=1)
+
     return {
         "total_return":          total_return,
+        "deflated_sharpe_ratio": dsr,
         "annualized_return":     ann_return,
         "cagr":                  cagr,
         "sharpe_ratio":          sharpe,

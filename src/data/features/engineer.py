@@ -15,36 +15,15 @@ from src.data.features.cross_asset    import compute_cross_asset_features
 from src.data.features.microstructure import compute_microstructure_features
 from src.data.features.sentiment      import compute_sentiment_features
 from src.data.features.fundamental    import compute_fundamental_features
-from src.data.features.regime         import compute_regime_features
-from src.data.pipeline.storage        import save_features
+from src.data.features.regime             import compute_regime_features
+from src.data.features.triple_barrier     import compute_triple_barrier_targets, TB_TARGET_COLS
+from src.data.features.options            import compute_options_features
+from src.data.pipeline.storage            import save_features
 
 logger = get_logger(__name__)
 
 # Columns that are TARGETS — never used as model inputs
-TARGET_COLS = [
-    "target_1d", "target_5d",
-    "target_ret_1d", "target_ret_5d",
-    "target_vol_adj_1d",
-]
-
-
-def compute_targets(df: pd.DataFrame) -> pd.DataFrame:
-    """Compute forward-looking labels. These are computed BUT shifted to prevent leakage."""
-    close = df["close"]
-    log_ret_1d = np.log(close.shift(-1) / close)  # next bar return
-    log_ret_5d = np.log(close.shift(-5) / close)
-
-    tgt = pd.DataFrame(index=df.index)
-    tgt["target_1d"]         = np.sign(log_ret_1d).fillna(0).astype(int)
-    tgt["target_5d"]         = np.sign(log_ret_5d).fillna(0).astype(int)
-    tgt["target_ret_1d"]     = log_ret_1d
-    tgt["target_ret_5d"]     = log_ret_5d
-
-    # Compute local vol before using it (no lookahead — uses only past returns)
-    past_vol = np.log(close / close.shift(1)).rolling(5).std()
-    tgt["target_vol_adj_1d"] = log_ret_1d / past_vol.replace(0, np.nan)
-
-    return tgt
+TARGET_COLS = TB_TARGET_COLS
 
 
 def engineer_features(
@@ -93,6 +72,12 @@ def engineer_features(
         except Exception as exc:
             logger.warning("fundamentals_failed", ticker=ticker, error=str(exc))
 
+    # ── Options features (equities only, NaN for crypto/macro) ───────────────
+    try:
+        frames.append(compute_options_features(df, ticker))
+    except Exception as exc:
+        logger.warning("options_failed", ticker=ticker, error=str(exc))
+
     # ── Combine features ──────────────────────────────────────────────────────
     feature_df = pd.concat(frames, axis=1)
 
@@ -102,8 +87,8 @@ def engineer_features(
         sent_trend  = feature_df["sent_score_1d"].apply(np.sign)
         feature_df["sent_diverge"] = (price_trend != sent_trend).astype(float)
 
-    # ── Targets (shifted forward — MUST NOT be used as features) ─────────────
-    targets = compute_targets(df)
+    # ── Targets — triple barrier labels (MUST NOT be used as features) ────────
+    targets = compute_triple_barrier_targets(df)
     feature_df = pd.concat([feature_df, targets], axis=1)
 
     # ── Final cleanup ─────────────────────────────────────────────────────────

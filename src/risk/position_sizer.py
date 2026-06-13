@@ -8,6 +8,7 @@ from src.config.constants import (
     TRADING_DAYS,
 )
 from src.config.logging_config import get_logger
+from src.risk.hrp import hrp_weights
 
 logger = get_logger(__name__)
 
@@ -90,3 +91,39 @@ class PositionSizer:
         ann_vol = realized_vol_daily * np.sqrt(TRADING_DAYS)
         frac = self.volatility_targeting(confidence, ann_vol, regime)
         return float(signal) * frac
+
+    def hrp_portfolio_weights(
+        self,
+        returns_df: pd.DataFrame,
+        signals: pd.Series,
+        min_periods: int = 30,
+    ) -> pd.Series:
+        """
+        Hierarchical Risk Parity portfolio weights.
+
+        Uses HRP clustering to allocate risk across the active positions,
+        then scales by signal direction. Zero-signal assets get zero weight.
+
+        Args:
+            returns_df : DataFrame of daily returns, columns = asset names.
+            signals    : Series of {-1, 0, +1} per asset (same columns).
+            min_periods: Minimum history rows to compute HRP; falls back to
+                         equal-weight if insufficient data.
+
+        Returns:
+            pd.Series of signed weights (negative = short), summing to ≤ 1.
+        """
+        active = signals[signals != 0]
+        if active.empty:
+            return pd.Series(dtype=float)
+
+        active_cols = [c for c in active.index if c in returns_df.columns]
+        if not active_cols:
+            return pd.Series(dtype=float)
+
+        sub_returns = returns_df[active_cols].dropna(how="all")
+        weights     = hrp_weights(sub_returns, min_periods=min_periods)
+
+        # Apply signal direction: negative weight for short signals
+        signed = weights * active.reindex(active_cols).fillna(0)
+        return signed.clip(-self.max_position, self.max_position)

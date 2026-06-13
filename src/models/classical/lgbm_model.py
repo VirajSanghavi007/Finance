@@ -67,7 +67,7 @@ class LightGBMModel(BaseModel):
         except ImportError as e:
             raise ImportError(f"lightgbm and optuna required: {e}")
 
-        from sklearn.model_selection import TimeSeriesSplit
+        from src.utils.purged_kfold import PurgedKFold
 
         self._feature_names = list(X_train.columns)
         y_train_mapped = self._remap_labels(y_train)
@@ -82,7 +82,7 @@ class LightGBMModel(BaseModel):
 
         X_all = pd.concat([X_train, X_val]).fillna(0)
         y_all = pd.concat([y_train_mapped, y_val_mapped])
-        tscv  = TimeSeriesSplit(n_splits=self.n_cv_splits)
+        tscv  = PurgedKFold(n_splits=self.n_cv_splits, embargo_pct=0.01)
 
         def objective(trial) -> float:
             params = {
