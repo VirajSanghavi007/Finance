@@ -61,7 +61,7 @@ def render():
         unsafe_allow_html=True,
     )
 
-    tab1, tab2, tab3 = st.tabs(["API Keys", "Training Status", "Live Signals"])
+    tab1, tab2, tab3, tab4 = st.tabs(["API Keys", "Training Status", "Live Signals", "Training Log"])
 
     # ── Tab 1: API Keys ──────────────────────────────────────────────────────
     with tab1:
@@ -210,6 +210,50 @@ def render():
             c2.metric("— FLAT",  int((sig_df["signal"] == 0).sum()))
             c3.metric("▼ SHORT", int((sig_df["signal"] == -1).sum()))
             c4.metric("High-Conf", int((sig_df["confidence"] >= 0.62).sum()))
+
+
+    # ── Tab 4: Training Log ──────────────────────────────────────────────────
+    with tab4:
+        st.markdown(
+            f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:8px">'
+            f'LIVE TRAINING LOG</div>',
+            unsafe_allow_html=True,
+        )
+        try:
+            from src.config.constants import PROJECT_ROOT
+            log_path = PROJECT_ROOT / "data" / "logs" / "train_remaining.log"
+            if log_path.exists():
+                log_text = log_path.read_text(encoding="utf-8", errors="replace")
+                # Strip \r sequences that Optuna uses for progress bars
+                import re
+                log_text = re.sub(r"[^\n]*\r([^\r\n])", r"\1", log_text)
+                # Show last 100 lines
+                lines = [l for l in log_text.splitlines() if l.strip()][-100:]
+                st.code("\n".join(lines), language=None)
+                st.caption(f"Last 100 non-empty lines from {log_path.name}. "
+                           f"Total size: {log_path.stat().st_size / 1024:.1f} KB")
+            else:
+                st.info("No training log found. Start training with: "
+                        "`python scripts/train_models.py --register`")
+        except Exception as e:
+            st.error(f"Could not read log: {e}")
+
+        # Watch pipeline log
+        st.markdown("---")
+        st.markdown(
+            f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:8px">'
+            f'WATCH PIPELINE LOG</div>',
+            unsafe_allow_html=True,
+        )
+        try:
+            from src.config.constants import PROJECT_ROOT
+            wp_path = PROJECT_ROOT / "data" / "logs" / "watch_pipeline.log"
+            if wp_path.exists():
+                wp_text = wp_path.read_text(encoding="utf-8", errors="replace")
+                lines_wp = [l for l in wp_text.splitlines() if l.strip()][-50:]
+                st.code("\n".join(lines_wp), language=None)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
