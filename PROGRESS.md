@@ -1,31 +1,73 @@
 # AlgoTrade-X Build Progress
 
-## Status: ALL PHASES COMPLETE + TRAINING IN PROGRESS ✅
+## Status: ALL PHASES COMPLETE + TRAINING IN PROGRESS
 ## Last updated: 2026-06-13
 ## Test suite: 144 passed, 0 failed
 
-### Training Status (2026-06-13)
-- Trained tickers (all 3 models): SPY, QQQ, AAPL, MSFT, NVDA, GOOGL, AMZN (7/25)
-- Training in progress: META, JPM, GS, XOM, BRK-B, XLF, XLK, XLE, XLV, XLI, ^VIX, ^TNX, GLD, TLT, BTC_USDT, ETH_USDT, SOL_USDT, BNB_USDT
-- Ensemble stackers built: SPY, QQQ, AAPL, MSFT, NVDA, GOOGL, AMZN
+---
 
-### Backtest Results (7 tickers, 2026-06-13)
-- Mean Sharpe: 1.51 | Median Sharpe: 0.76 | 100% positive Sharpe
-- Top performers: AMZN (Sharpe=2.90), NVDA (2.88), MSFT (2.64)
-- SPY (0.57), GOOGL (0.76), QQQ (0.30), AAPL (0.50)
+### Training Status (2026-06-13)
+
+| Ticker | RF | XGB | LGBM | Stacker | Backtest Sharpe |
+|--------|-----|-----|------|---------|----------------|
+| SPY    | ✓ | ✓ | ✓ | ✓ | 1.57 |
+| QQQ    | ✓ | ✓ | ✓ | ✓ | 2.86 |
+| AAPL   | ✓ | ✓ | ✓ | ✓ | 1.74 |
+| MSFT   | ✓ | ✓ | ✓ | ✓ | 2.62 |
+| NVDA   | ✓ | ✓ | ✓ | ✓ | 2.82 |
+| GOOGL  | ✓ | ✓ | ✓ | ✓ | 3.09 |
+| AMZN   | ✓ | ✓ | ✓ | ✓ | 2.94 |
+| META   | ✓ | ✓ | ✓ | ✓ | 3.45 |
+| JPM    | ✓ | training | - | - | - |
+| GS     | queued | - | - | - | - |
+| XOM    | queued | - | - | - | - |
+| BRK-B  | queued | - | - | - | - |
+| XLF    | queued | - | - | - | - |
+| XLK    | queued | - | - | - | - |
+| XLE    | queued | - | - | - | - |
+| XLV    | queued | - | - | - | - |
+| XLI    | queued | - | - | - | - |
+| ^VIX   | queued | - | - | - | - |
+| ^TNX   | queued | - | - | - | - |
+| GLD    | queued | - | - | - | - |
+| TLT    | queued | - | - | - | - |
+| BTC_USDT | queued | - | - | - | - |
+| ETH_USDT | queued | - | - | - | - |
+| SOL_USDT | queued | - | - | - | - |
+| BNB_USDT | queued | - | - | - | - |
+
+### Backtest Results (8 tickers with stacker ensemble, 2026-06-13)
+- **Mean Sharpe: 2.64** | Median Sharpe: 2.84 | **100% positive Sharpe** | **100% Sharpe ≥ 1.0**
+- Best: META (3.45), GOOGL (3.09), AMZN (2.94), QQQ (2.86), NVDA (2.82)
+- Stacker ensemble improves over base models: GOOGL 0.76→3.09, META 1.62→3.45
+- All models: SPY(1.57), QQQ(2.86), AAPL(1.74), MSFT(2.62), NVDA(2.82), GOOGL(3.09), AMZN(2.94), META(3.45)
 
 ### Live Paper Trading
 - Alpaca paper account: $100k, ACTIVE
 - Market opens Monday 2026-06-15 09:30 ET
-- Script: python scripts/start_paper_trading.py
+- Script: `python scripts/start_paper_trading.py`
 
 ### GitHub
 - https://github.com/VirajSanghavi007/Finance (all code pushed, no .env)
-- Latest commit: backtest + ensemble scripts
+- Latest commit: dashboard upgrades + stacker-based backtest
 
 ### Render Deployment
 - render.yaml created — deploy from Render.com dashboard
 - Connect GitHub repo, auto-deploys on push
+
+---
+
+## Dashboard Pages (all wired to real data)
+
+| Page | Data Source | Status |
+|------|-------------|--------|
+| 01 Overview | ModelRegistry predictions + AppState | Real signals from all trained tickers |
+| 02 Signals | Stacker/XGB/LGBM/RF predictions | Real model predictions + confidence chart |
+| 03 Backtest | data/backtest_results/*.json | Per-ticker Sharpe bar chart |
+| 04 Risk | AppState risk metrics + real OHLCV | VaR, circuit breaker, correlation heatmap |
+| 05 Models | ModelRegistry + WFO Sharpe | Training progress, feature importance |
+| 06 Explainability | TreeExplainer SHAP | Real SHAP waterfall from trained XGB |
+| 07 Settings | .env / AppState config | API key status, env config |
 
 ---
 
@@ -82,37 +124,39 @@
 - src/api/main.py (FastAPI, CORS, lifespan, /health, /ws/signals)
 
 ### Phase 9 ✅ Dashboard (ALL 7 PAGES WIRED TO REAL DATA)
-- src/dashboard/theme.py (AMBER/GREEN/RED/BASE/SURFACE, PLOTLY_TEMPLATE)
-- src/dashboard/components/: theme.py, charts.py, tables.py, metrics_bar.py, signal_card.py
-- src/dashboard/app.py (importlib-based page loader)
-- Pages 01–07: all load real data from disk (features, AppState, ModelRegistry)
-  - Fallback to informative placeholders when data not downloaded yet
-  - No np.random synthetic data in production paths
+- src/dashboard/predictions.py (shared utility: stacker > xgb > lgbm > rf)
+- src/dashboard/theme.py + components/ (theme, charts, tables, metrics_bar, signal_card)
+- src/dashboard/app.py
+- Pages 01–07: all load real data from disk (features, registry, AppState, backtest JSON)
 
 ### Phase 10 ✅ Scripts + Docker
 - scripts/fetch_data.py (download + feature engineering)
 - scripts/train_models.py (RF/XGB/LGBM training + ModelRegistry)
-- scripts/run_backtest.py (WFO backtest → metrics printout)
+- scripts/build_ensemble.py (stacker ensemble from pre-trained models, ~5 seconds)
+- scripts/run_full_backtest.py (WFO backtest → stacker > base model)
+- scripts/post_training_pipeline.py (auto build ensemble + run backtest)
+- scripts/start_paper_trading.py (live Alpaca paper trading)
 - docker-compose.yml (redis, api, dashboard services)
 
 ---
 
-## Environment Notes
-- Python 3.14.5 on Windows 11
-- hmmlearn NOT installable on Python 3.14 → regime uses expanding().quantile() fallback
-- Installed: xgboost, lightgbm, optuna, streamlit, plotly, fastapi, httpx, scipy
-- NOT installed: torch (deep models fall back gracefully), stable-baselines3
-
 ## How to Run
-1. Download data:    python scripts/fetch_data.py
-2. Train models:     python scripts/train_models.py --register
-3. Run backtest:     python scripts/run_backtest.py --ticker SPY
-4. Start API:        uvicorn src.api.main:app --port 8000
-5. Start dashboard:  streamlit run src/dashboard/app.py
-6. Docker all-in-one: docker-compose up
+1. Download data:    `python scripts/fetch_data.py`
+2. Train models:     `python scripts/train_models.py --register`
+3. Build ensembles:  `python scripts/build_ensemble.py`
+4. Run backtest:     `python scripts/run_full_backtest.py`
+5. Start API:        `uvicorn src.api.main:app --port 8000`
+6. Start dashboard:  `streamlit run src/dashboard/app.py`
+7. Docker all-in-one: `docker-compose up`
 
 ## Class Name Corrections (important for imports)
 - XGBoostModel  (NOT XGBModel)
 - LightGBMModel (NOT LGBMModel)
 - RandomForestModel
 - TradingEnv, PPOAgent, SACAgent, EnsembleModel, StackingEnsemble, RegimeRouter
+
+## Environment Notes
+- Python 3.14.5 on Windows 11
+- hmmlearn NOT installable on Python 3.14 → regime uses expanding().quantile() fallback
+- Installed: xgboost, lightgbm, optuna, streamlit, plotly, fastapi, httpx, scipy, shap
+- NOT installed: torch (deep models fall back gracefully), stable-baselines3

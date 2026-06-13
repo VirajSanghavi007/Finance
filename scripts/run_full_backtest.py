@@ -58,30 +58,41 @@ def backtest_ticker(
     if len(X_te) < 50:
         return {"error": "insufficient_test_data", "ticker": ticker}
 
-    # Try models in order of expected quality
-    model = None
+    # Try stacker ensemble first, then individual models
+    signals = None
     model_name_used = None
-    for suffix in ["xgb", "lgbm", "rf"]:
-        name = f"{ticker}_{suffix}"
-        try:
-            m = registry.load_model(name)
-            if m is not None:
-                model = m
-                model_name_used = name
-                break
-        except Exception:
-            pass
 
-    if model is None:
+    stacker_path = Path("data/models") / f"{ticker}_stacker.pkl"
+    if stacker_path.exists():
+        try:
+            import joblib
+            stacker = joblib.load(stacker_path)
+            base_probas = {}
+            for suffix in ["rf", "xgb", "lgbm"]:
+                m = registry.load_model(f"{ticker}_{suffix}")
+                if m is not None:
+                    base_probas[f"{ticker}_{suffix}"] = m.predict_proba(X_te)
+            if len(base_probas) >= 2:
+                signals = stacker.predict(base_probas)
+                model_name_used = f"{ticker}_stacker"
+        except Exception as e:
+            logger.warning("stacker_failed", ticker=ticker, error=str(e))
+
+    if signals is None:
+        for suffix in ["xgb", "lgbm", "rf"]:
+            name = f"{ticker}_{suffix}"
+            try:
+                m = registry.load_model(name)
+                if m is not None:
+                    signals = m.predict(X_te)
+                    model_name_used = name
+                    break
+            except Exception:
+                pass
+
+    if signals is None:
         logger.warning("no_model_found", ticker=ticker)
         return {"error": "no_model", "ticker": ticker}
-
-    # Generate signals on test set
-    try:
-        signals = model.predict(X_te)
-    except Exception as e:
-        logger.error("predict_failed", ticker=ticker, error=str(e))
-        return {"error": str(e), "ticker": ticker}
 
     # Simulate P&L: use target_ret_1d as forward return proxy
     if "target_ret_1d" in feat_df.columns:
