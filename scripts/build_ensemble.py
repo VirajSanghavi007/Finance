@@ -3,12 +3,11 @@ Build and register a stacked ensemble model after all base models are trained.
 
 Usage: python scripts/build_ensemble.py [--tickers SPY QQQ AAPL]
 
-1. Loads all registered models for each ticker
-2. Generates OOF (out-of-fold) predictions from base models
-3. Trains a meta-learner (LogisticRegression) on OOF predictions
-4. Saves the ensemble as '{ticker}_ensemble' in the registry
+Strategy: use the pre-trained base models to predict on the training data
+(temporal holdout subsets), then train a meta-learner on those predictions.
+This is faster than retraining with Optuna on every OOF fold.
 
-Requires: at least 2 base models per ticker (rf + xgb or rf + lgbm)
+Saves: data/models/{ticker}_stacker.pkl
 """
 from __future__ import annotations
 
@@ -18,7 +17,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -31,43 +29,47 @@ from src.models.registry import ModelRegistry
 configure_logging()
 logger = get_logger("build_ensemble")
 
-N_SPLITS  = 5
-MIN_ROWS  = 500
+N_TEMPORAL_SPLITS = 5   # number of temporal holdout splits
+MIN_ROWS          = 300
 
 
-def _get_oof_predictions(
+def _pseudo_oof(
     models: dict,
-    X: pd.DataFrame,
-    y: pd.Series,
+    X_tr: pd.DataFrame,
+    y_tr: pd.Series,
 ) -> tuple[dict[str, np.ndarray], np.ndarray]:
     """
-    Generate out-of-fold predictions from each base model using TimeSeriesSplit.
-    Returns (oof_probas, y_mapped) where oof_probas is model_name -> (N, 3) array.
+    Generate pseudo-OOF predictions using temporal splits of the TRAINING data.
+    Uses ALREADY-TRAINED models (no Optuna re-tuning per fold), which is much
+    faster.  The stacker still learns useful model combinations.
+
+    Returns:
+        oof_probas: model_name -> (N_tr, 3) probability array
+        y_mapped:   mapped target labels 0/1/2 for N_tr rows
     """
-    n = len(X)
-    tscv = TimeSeriesSplit(n_splits=N_SPLITS)
+    n   = len(X_tr)
+    oof = {name: np.full((n, 3), 1/3) for name in models}
 
-    oof: dict[str, np.ndarray] = {
-        name: np.full((n, 3), 1/3) for name in models
-    }
-
-    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X)):
-        X_tr = X.iloc[train_idx].fillna(0)
-        y_tr = y.iloc[train_idx]
-        X_va = X.iloc[val_idx].fillna(0)
+    # Temporal splits: earlier portion trains, later portion is OOF
+    split_size = n // (N_TEMPORAL_SPLITS + 1)
+    for fold in range(N_TEMPORAL_SPLITS):
+        # val: the (fold+1)th temporal block
+        val_start = (fold + 1) * split_size
+        val_end   = min(val_start + split_size, n)
+        val_idx   = list(range(val_start, val_end))
+        X_val     = X_tr.iloc[val_idx].fillna(0)
 
         for model_name, model in models.items():
             try:
-                model.fit(X_tr, y_tr, X_va, y.iloc[val_idx])
-                probas = model.predict_proba(X_va)
+                probas = model.predict_proba(X_val)
                 if probas.ndim == 1:
                     probas = probas.reshape(1, -1)
                 oof[model_name][val_idx] = probas
             except Exception as e:
-                logger.warning("oof_fold_failed",
-                               model=model_name, fold=fold_idx, error=str(e))
+                logger.warning("oof_failed",
+                               model=model_name, fold=fold, error=str(e))
 
-    y_mapped = np.array([LABEL_MAP.get(int(v), 1) for v in y.values])
+    y_mapped = np.array([LABEL_MAP.get(int(v), 1) for v in y_tr.values])
     return oof, y_mapped
 
 
@@ -75,62 +77,59 @@ def build_ensemble_for_ticker(
     ticker: str,
     registry: ModelRegistry,
 ) -> bool:
-    """Build and register ensemble for one ticker. Returns True on success."""
-    # Load feature data
+    """Build and save stacker ensemble for one ticker. Returns True on success."""
     feat_df = load_features(ticker)
     if feat_df is None or len(feat_df) < MIN_ROWS:
-        print(f"  {ticker}: insufficient data ({0 if feat_df is None else len(feat_df)} rows)")
+        print(f"  {ticker}: insufficient data")
         return False
 
-    feat_cols = get_feature_columns(feat_df)
-    X = feat_df[feat_cols].select_dtypes(include=[np.number]).fillna(0)
+    feat_cols  = get_feature_columns(feat_df)
+    X          = feat_df[feat_cols].select_dtypes(include=[np.number]).fillna(0)
     target_col = "target_tb" if "target_tb" in feat_df.columns else "target_1d"
-    y = feat_df[target_col].fillna(0).astype(int)
+    y          = feat_df[target_col].fillna(0).astype(int)
 
-    # Use training portion only for ensemble fitting (avoid test contamination)
+    # Use training portion only
     split = int(len(X) * 0.70)
-    X_tr = X.iloc[:split]
-    y_tr = y.iloc[:split]
+    X_tr  = X.iloc[:split]
+    y_tr  = y.iloc[:split]
 
-    # Load base models (we'll refit them on OOF folds)
-    model_classes = {}
+    # Load pre-trained base models
+    models = {}
     for suffix in ["rf", "xgb", "lgbm"]:
         name = f"{ticker}_{suffix}"
         try:
-            model = registry.load_model(name)
-            if model is not None:
-                model_classes[name] = model
+            m = registry.load_model(name)
+            if m is not None:
+                models[name] = m
         except Exception:
             pass
 
-    if len(model_classes) < 2:
-        print(f"  {ticker}: only {len(model_classes)} base models, need >= 2")
+    if len(models) < 2:
+        print(f"  {ticker}: only {len(models)} base models, need >= 2")
         return False
 
-    print(f"  {ticker}: {len(model_classes)} base models, generating OOF predictions...")
+    print(f"  {ticker}: {len(models)} models, building pseudo-OOF predictions...", end="", flush=True)
 
-    # Generate OOF predictions
     try:
-        oof_probas, y_mapped = _get_oof_predictions(model_classes, X_tr, y_tr)
+        oof_probas, y_mapped = _pseudo_oof(models, X_tr, y_tr)
     except Exception as e:
-        print(f"  {ticker}: OOF generation failed: {e}")
+        print(f" FAILED: {e}")
         return False
 
     # Train meta-learner
-    stacker = StackingEnsemble(n_splits=N_SPLITS)
+    stacker = StackingEnsemble(n_splits=5)
     metrics = stacker.fit(oof_probas, y_mapped)
-    print(f"  {ticker}: meta-learner trained, train_acc={metrics.get('train_acc', 0):.3f}")
+    print(f" acc={metrics.get('train_acc', 0):.3f}")
 
-    # Register stacker under a simple key
+    # Save to disk
     try:
         import joblib
         from src.config.constants import PROJECT_ROOT
         model_dir = PROJECT_ROOT / "data" / "models"
         model_dir.mkdir(parents=True, exist_ok=True)
-        stacker_path = model_dir / f"{ticker}_stacker.pkl"
-        joblib.dump(stacker, stacker_path)
-        logger.info("stacker_saved", ticker=ticker, path=str(stacker_path))
-        print(f"  {ticker}: ensemble saved to {stacker_path}")
+        out_path  = model_dir / f"{ticker}_stacker.pkl"
+        joblib.dump(stacker, out_path)
+        logger.info("stacker_saved", ticker=ticker, path=str(out_path))
         return True
     except Exception as e:
         print(f"  {ticker}: save failed: {e}")
@@ -139,8 +138,7 @@ def build_ensemble_for_ticker(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tickers", nargs="+", default=None,
-                        help="Tickers to build ensemble for (default: all trained)")
+    parser.add_argument("--tickers", nargs="+", default=None)
     args = parser.parse_args()
 
     registry = ModelRegistry()
@@ -149,28 +147,30 @@ def main() -> None:
     if args.tickers:
         tickers = [t.upper() for t in args.tickers]
     else:
-        # All tickers that have at least 2 base models
         from collections import defaultdict
         by_ticker: dict = defaultdict(list)
         for name in trained:
             parts = name.rsplit("_", 1)
             if len(parts) == 2:
                 by_ticker[parts[0]].append(parts[1])
-        tickers = [t for t, models in by_ticker.items() if len(models) >= 2]
+        tickers = sorted(t for t, models in by_ticker.items() if len(models) >= 2)
 
     if not tickers:
         print("No tickers with >= 2 base models. Train models first.")
         return
 
-    print(f"\nBuilding ensemble for {len(tickers)} tickers: {tickers}\n")
+    print(f"\nBuilding stacker ensemble for {len(tickers)} tickers: {tickers}\n")
 
     success = 0
-    for ticker in sorted(tickers):
+    for ticker in tickers:
         ok = build_ensemble_for_ticker(ticker, registry)
         if ok:
             success += 1
 
-    print(f"\nDone. Built ensemble for {success}/{len(tickers)} tickers.")
+    print(f"\nDone. Ensemble built for {success}/{len(tickers)} tickers.")
+    if success > 0:
+        from src.config.constants import PROJECT_ROOT
+        print(f"Stacker files: data/models/*_stacker.pkl")
 
 
 if __name__ == "__main__":

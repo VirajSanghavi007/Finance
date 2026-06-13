@@ -39,7 +39,7 @@ class StackingEnsemble:
 
         self._meta = LogisticRegression(
             C=self.C, max_iter=1000, class_weight="balanced",
-            solver="lbfgs", multi_class="multinomial",
+            solver="lbfgs",
         )
         self._meta.fit(X_scaled, y_true)
         train_acc = float((self._meta.predict(X_scaled) == y_true).mean())
