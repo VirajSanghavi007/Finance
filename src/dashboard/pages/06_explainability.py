@@ -1,5 +1,13 @@
-"""Explainability page — SHAP, drift monitor, audit log."""
+﻿"""Explainability page â€” SHAP, drift monitor, audit log."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import numpy as np
 import pandas as pd
@@ -61,7 +69,7 @@ def _get_shap_values(ticker: str = "SPY") -> pd.DataFrame | None:
 
         fi      = rf.get_feature_importance().nlargest(10)
         last_x  = X.iloc[-1]
-        # Pseudo-SHAP: importance × (feature_value - feature_mean) / feature_std
+        # Pseudo-SHAP: importance Ã— (feature_value - feature_mean) / feature_std
         means   = X.mean()
         stds    = X.std().replace(0, 1)
         z_score = (last_x - means) / stds

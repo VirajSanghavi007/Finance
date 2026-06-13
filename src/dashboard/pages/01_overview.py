@@ -1,5 +1,13 @@
-"""Overview page — portfolio summary + active signals."""
+﻿"""Overview page â€” portfolio summary + active signals."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import numpy as np
 import pandas as pd

@@ -1,5 +1,13 @@
-"""Risk dashboard — VaR, drawdown, circuit breaker status."""
+﻿"""Risk dashboard â€” VaR, drawdown, circuit breaker status."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import numpy as np
 import pandas as pd
@@ -58,7 +66,7 @@ def render():
     risk = _get_risk_data()
     circuit_open = risk["circuit_open"]
     cb_color = RED if circuit_open else GREEN
-    cb_label  = "CIRCUIT OPEN — TRADING HALTED" if circuit_open else "CIRCUIT CLOSED"
+    cb_label  = "CIRCUIT OPEN â€” TRADING HALTED" if circuit_open else "CIRCUIT CLOSED"
 
     st.markdown(
         f'<div style="background:{SURFACE};border:2px solid {cb_color};padding:10px;'

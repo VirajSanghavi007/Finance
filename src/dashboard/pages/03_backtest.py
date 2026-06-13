@@ -1,5 +1,13 @@
-"""Backtest results page — WFO fold performance, metrics table."""
+﻿"""Backtest results page â€” WFO fold performance, metrics table."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import numpy as np
 import pandas as pd
@@ -118,7 +126,7 @@ def render():
             n = len(fold_data)
             col4.metric("Win Folds", f"{(sharpes > 1.0).sum()}/{n}")
 
-    # Equity curve chart — real benchmark data
+    # Equity curve chart â€” real benchmark data
     st.subheader("SPY Benchmark Equity Curve")
     spy_r = _load_equity_for_ticker("SPY")
     if spy_r is not None and len(spy_r) > 10:

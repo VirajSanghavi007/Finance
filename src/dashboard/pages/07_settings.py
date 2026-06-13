@@ -1,5 +1,13 @@
-"""Settings page — configuration viewer."""
+﻿"""Settings page â€” configuration viewer."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import streamlit as st
 from src.dashboard.theme import AMBER, SURFACE, BORDER
@@ -19,7 +27,7 @@ def render():
     for source in ["alpaca", "newsapi", "fred", "sec"]:
         has_key = source in sources
         color = "#00E676" if has_key else "#FF1744"
-        label = "✓ Configured" if has_key else "✗ Not configured"
+        label = "âœ“ Configured" if has_key else "âœ— Not configured"
         st.markdown(
             f'<div style="font-family:Consolas;font-size:12px">'
             f'<span style="color:{AMBER}">{source.upper()}</span> '

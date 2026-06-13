@@ -1,5 +1,13 @@
-"""Models page — per-model performance, feature importance."""
+﻿"""Models page â€” per-model performance, feature importance."""
 from __future__ import annotations
+
+import sys as _sys
+from pathlib import Path as _Path
+_root = _Path(__file__).resolve().parents[3]
+if str(_root) not in _sys.path:
+    _sys.path.insert(0, str(_root))
+
+
 
 import numpy as np
 import pandas as pd
@@ -90,7 +98,7 @@ def render():
         # Show known model names as placeholders
         model_stats = pd.DataFrame({
             "Model":   ["XGBoost", "LightGBM", "RandomForest", "LSTM", "TCN", "PatchTST", "PPO"],
-            "Sharpe":  ["—"] * 7,
+            "Sharpe":  ["â€”"] * 7,
             "Status":  ["not trained"] * 7,
         })
         st.dataframe(model_stats, use_container_width=True, hide_index=True)

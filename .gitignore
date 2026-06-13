@@ -1,23 +1,51 @@
+# Virtual environment — never commit
 venv/
+.venv/
+env/
+
+# Secrets
 .env
+
+# Downloaded / generated data — too large for git
 data/raw/
 data/processed/
 data/models/
 data/logs/
-__pycache__/
-*.pyc
-.pytest_cache/
+data/backtest_results/
+
+# Model artifacts
 artifacts/
 
-# Local/editor noise
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
 
-# Test and build outputs
+# Test / coverage
+.pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+
+# Build
 dist/
 build/
 *.egg-info/
