@@ -1,4 +1,4 @@
-"""Top-of-page metrics bar — key portfolio stats displayed Bloomberg-style."""
+"""Top-of-page metrics bar -- key portfolio stats displayed Bloomberg-style."""
 from __future__ import annotations
 
 import streamlit as st

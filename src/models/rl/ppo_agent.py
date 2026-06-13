@@ -25,7 +25,7 @@ except ImportError:
 class PPOAgent(BaseModel):
     """
     PPO agent using MlpLstmPolicy for temporal dependencies.
-    Wraps SB3 PPO as a BaseModel — produces {-1,0,1} signals.
+    Wraps SB3 PPO as a BaseModel -- produces {-1,0,1} signals.
     """
 
     def __init__(

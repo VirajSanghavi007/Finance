@@ -1,7 +1,7 @@
 """
 Mamba-inspired State Space Model (SSM) for time series classification.
 
-Mamba (Gu & Dao, 2023) introduced selective state spaces — the key insight
+Mamba (Gu & Dao, 2023) introduced selective state spaces -- the key insight
 is that the SSM parameters (A, B, C) are INPUT-DEPENDENT (selective),
 unlike S4 where they are fixed. This makes Mamba both:
   - O(L) in sequence length (vs O(L²) for Transformers)
@@ -83,7 +83,7 @@ def _build_mamba_net(n_features: int, d_model: int, n_layers: int, d_state: int)
 
                 A = -torch.exp(self.A_log)               # (D, S)
 
-                # Selective scan — recurrent formulation (CPU-compatible)
+                # Selective scan -- recurrent formulation (CPU-compatible)
                 # h: (B, D, S)
                 h = torch.zeros(B_sz, D, S, device=x.device, dtype=x.dtype)
                 ys = []
@@ -313,7 +313,7 @@ class MambaModel(BaseModel):
         return np.array([LABEL_UNMAP[int(np.argmax(p))] for p in proba])
 
     def get_feature_importance(self) -> pd.Series:
-        # SSMs don't have built-in feature importance — return uniform
+        # SSMs don't have built-in feature importance -- return uniform
         if not self._feature_names:
             return pd.Series(dtype=float)
         n = len(self._feature_names)

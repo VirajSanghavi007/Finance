@@ -78,12 +78,21 @@ def simple_signal_backtest(feat_df: pd.DataFrame, ticker: str) -> dict:
         prev_close = c
 
     equity_series = pd.Series(equity[1:], index=X_te.index)
-    returns       = equity_series.pct_change().dropna()
 
-    trades_df = pd.DataFrame({
-        "pnl":          [np.random.randn() * 100 for _ in range(max(1, int(len(signals) * 0.1)))],
-        "holding_days": [np.random.randint(1, 20) for _ in range(max(1, int(len(signals) * 0.1)))],
-    })
+    # Build real trades_df from signal transitions
+    trade_records = []
+    entry_price, entry_cap, entry_sig = None, None, 0
+    for i, (sig, c) in enumerate(zip(signals, close.values)):
+        if entry_sig != 0 and sig != entry_sig:
+            pnl = (c - entry_price) / entry_price * entry_sig * entry_cap * 0.10
+            trade_records.append({"pnl": pnl, "holding_days": 1})
+            entry_price, entry_cap, entry_sig = None, None, 0
+        if sig != 0 and entry_sig == 0:
+            entry_price, entry_cap, entry_sig = c, capital, sig
+
+    trades_df = pd.DataFrame(trade_records) if trade_records else pd.DataFrame(
+        {"pnl": [0.0], "holding_days": [1]}
+    )
 
     metrics = compute_all_metrics(equity_series, trades_df)
     return metrics
@@ -106,12 +115,12 @@ def main() -> None:
     metrics = simple_signal_backtest(feat_df, ticker)
 
     if not metrics:
-        print("Backtest failed — insufficient data.")
+        print("Backtest failed -- insufficient data.")
         return
 
-    print(f"\n{'═'*50}")
-    print(f"  Backtest Results — {ticker}")
-    print(f"{'═'*50}")
+    print(f"\n{'='*50}")
+    print(f"  Backtest Results -- {ticker}")
+    print(f"{'='*50}")
     key_metrics = [
         ("Sharpe Ratio",  "sharpe_ratio",    ".3f"),
         ("Total Return",  "total_return",    ".1%"),
@@ -126,7 +135,7 @@ def main() -> None:
             print(f"  {label:<20} {val:{fmt}}")
         except Exception:
             print(f"  {label:<20} {val}")
-    print(f"{'═'*50}\n")
+    print(f"{'='*50}\n")
 
 
 if __name__ == "__main__":

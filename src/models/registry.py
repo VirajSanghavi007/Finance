@@ -139,7 +139,7 @@ class ModelRegistry:
         return cls.load(path)
 
     def promote_to_champion(self, model_name: str, version: str) -> None:
-        """Tag a version as 'champion' — used for live trading."""
+        """Tag a version as 'champion' -- used for live trading."""
         index = self._load_index()
         for entry in index.get(model_name, []):
             entry["tags"].pop("champion", None)  # remove old champion tag

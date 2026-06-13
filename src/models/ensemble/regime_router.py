@@ -32,17 +32,17 @@ class RegimeRouter:
     """
 
     _DEFAULT_WEIGHTS = {
-        0: {  # low vol — trend-following
+        0: {  # low vol -- trend-following
             "xgb": 1.2, "lgbm": 1.2, "rf": 0.8,
             "lstm": 1.5, "tcn": 1.5, "patchtst": 1.3,
             "ppo": 1.0, "nbeats": 1.1,
         },
-        1: {  # mid vol — balanced
+        1: {  # mid vol -- balanced
             "xgb": 1.0, "lgbm": 1.0, "rf": 1.0,
             "lstm": 1.0, "tcn": 1.0, "patchtst": 1.0,
             "ppo": 1.0, "nbeats": 1.0,
         },
-        2: {  # high vol — conservative + RL
+        2: {  # high vol -- conservative + RL
             "xgb": 1.3, "lgbm": 1.0, "rf": 1.3,
             "lstm": 0.7, "tcn": 0.7, "patchtst": 0.8,
             "ppo": 1.4, "nbeats": 0.9,

@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def _amihud_illiquidity(close: pd.Series, volume: pd.Series, window: int = 21) -> pd.Series:
-    """Amihud (2002): |ret| / dollar_volume — higher = less liquid."""
+    """Amihud (2002): |ret| / dollar_volume -- higher = less liquid."""
     log_ret = np.log(close / close.shift(1)).abs()
     dollar_vol = close * volume
     ratio = log_ret / dollar_vol.replace(0, np.nan)

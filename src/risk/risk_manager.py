@@ -88,7 +88,7 @@ class RiskManager:
             vol_d   = daily_vols.get(ticker, 0.02)
             sized[ticker] = self._sizer.size(sig, conf, vol_d, regime)
 
-        # 3. Correlation filter — only for new long/short entries
+        # 3. Correlation filter -- only for new long/short entries
         held = [t for t, s in sized.items() if abs(s) > 0.01]
         filtered_signals = self._corr.filter_signals(
             {t: int(np.sign(s)) for t, s in sized.items()},

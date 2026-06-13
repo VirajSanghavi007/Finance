@@ -14,7 +14,7 @@ from src.config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-# Label mapping: XGBoost expects 0,1,2 — we map from -1,0,1
+# Label mapping: XGBoost expects 0,1,2 -- we map from -1,0,1
 LABEL_MAP   = {-1: 0, 0: 1, 1: 2}
 LABEL_UNMAP = {0: -1, 1: 0, 2: 1}
 

@@ -31,7 +31,7 @@ def main() -> None:
     print("Fetching all market data...")
     summary = run_full_download(
         skip_news=args.skip_news,
-        skip_sec=True,        # SEC is slow — skip by default
+        skip_sec=True,        # SEC is slow -- skip by default
         force_refresh=args.force_refresh,
     )
     print_summary(summary)
@@ -44,7 +44,7 @@ def main() -> None:
         results = run_all_features(equity_tickers=ok_tickers, save=True)
         print(f"Features saved for {len(results)} assets.")
     else:
-        print("No equity data downloaded — check internet connection.")
+        print("No equity data downloaded -- check internet connection.")
 
 
 if __name__ == "__main__":

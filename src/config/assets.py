@@ -2,7 +2,7 @@ from __future__ import annotations
 
 EQUITY_UNIVERSE: dict[str, str] = {
     # US Large Cap
-    "SPY":   "S&P 500 ETF — benchmark",
+    "SPY":   "S&P 500 ETF -- benchmark",
     "QQQ":   "Nasdaq 100 ETF",
     "AAPL":  "Apple",
     "MSFT":  "Microsoft",

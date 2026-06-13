@@ -1,4 +1,4 @@
-﻿“””Risk dashboard — VaR, drawdown, circuit breaker status.”””
+﻿"""Risk dashboard -- VaR, drawdown, circuit breaker status."""
 from __future__ import annotations
 
 import sys as _sys
@@ -66,7 +66,7 @@ def render():
     risk = _get_risk_data()
     circuit_open = risk["circuit_open"]
     cb_color = RED if circuit_open else GREEN
-    cb_label  = “CIRCUIT OPEN — TRADING HALTED” if circuit_open else “CIRCUIT CLOSED”
+    cb_label  = "CIRCUIT OPEN -- TRADING HALTED" if circuit_open else "CIRCUIT CLOSED"
 
     st.markdown(
         f'<div style="background:{SURFACE};border:2px solid {cb_color};padding:10px;'
@@ -116,4 +116,5 @@ def render():
         st.info("Correlation heatmap will populate once data is downloaded.")
 
 
-render()
+if __name__ == "__main__":
+    render()

@@ -1,6 +1,6 @@
 """
 Integration test: all 7 models must implement BaseModel and produce valid signals.
-Does NOT require fitted models — tests structural conformance + unfitted fallback paths.
+Does NOT require fitted models -- tests structural conformance + unfitted fallback paths.
 """
 from __future__ import annotations
 
@@ -100,7 +100,7 @@ def test_has_required_methods(model_fixture, request):
 
 @pytest.mark.parametrize("model_fixture", ["rf_model", "xgb_model", "lgbm_model"])
 def test_classical_fit_predict(model_fixture, request):
-    """Classical models fit without PyTorch — fast test."""
+    """Classical models fit without PyTorch -- fast test."""
     model = request.getfixturevalue(model_fixture)
     pytest.importorskip("xgboost") if "xgb" in model_fixture else None
     pytest.importorskip("lightgbm") if "lgbm" in model_fixture else None

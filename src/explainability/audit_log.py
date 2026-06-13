@@ -19,7 +19,7 @@ _AUDIT_DIR = LOGS_DIR / "audit"
 class AuditLog:
     """
     Append-only JSONL audit trail of all trading signals with their attribution.
-    One record per signal — enables post-hoc review and regulatory compliance.
+    One record per signal -- enables post-hoc review and regulatory compliance.
     """
 
     def __init__(self, log_dir: Path | None = None) -> None:

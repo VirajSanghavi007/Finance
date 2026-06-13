@@ -61,6 +61,6 @@ def compute_fundamental_features(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
     out["fund_pb_ratio"]         = float(pb)    if pb    is not None else np.nan
     out["fund_ev_ebitda"]        = float(evebi) if evebi is not None else np.nan
     out["fund_earnings_surprise"] = float(surp) if surp  is not None else np.nan
-    out["fund_revision_trend"]   = np.nan  # placeholder — needs analyst revision data
+    out["fund_revision_trend"]   = np.nan  # placeholder -- needs analyst revision data
 
     return out

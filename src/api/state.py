@@ -1,5 +1,5 @@
 """
-Application state singleton — shared across API routes.
+Application state singleton -- shared across API routes.
 Loads data from disk on startup and caches in memory.
 """
 from __future__ import annotations

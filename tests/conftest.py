@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def sample_ohlcv() -> pd.DataFrame:
-    """100 days of synthetic OHLCV data — no real market data needed for unit tests."""
+    """100 days of synthetic OHLCV data -- no real market data needed for unit tests."""
     np.random.seed(42)
     n = 300
     dates = pd.bdate_range("2020-01-01", periods=n)

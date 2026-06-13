@@ -13,7 +13,7 @@ from src.data.features.engineer import engineer_features, get_feature_columns, T
 
 
 def _inject_spike(df: pd.DataFrame, spike_idx: int, multiplier: float = 10.0) -> pd.DataFrame:
-    """Inject an unmistakable spike at position spike_idx — should NOT appear before it."""
+    """Inject an unmistakable spike at position spike_idx -- should NOT appear before it."""
     df = df.copy()
     df.iloc[spike_idx, df.columns.get_loc("close")] *= multiplier
     df.iloc[spike_idx, df.columns.get_loc("high")]  *= multiplier
@@ -48,7 +48,7 @@ def test_features_do_not_use_future_prices(sample_ohlcv):
     num_cols = [c for c in feat_cols
                 if pd.api.types.is_numeric_dtype(feat_clean[c])]
 
-    # Bars well before the spike — must be identical
+    # Bars well before the spike -- must be identical
     pre_spike = slice(None, spike_pos - 15)  # leave 15-bar buffer for EWM
 
     for col in num_cols:
@@ -71,7 +71,7 @@ def test_features_do_not_use_future_prices(sample_ohlcv):
 
 
 def test_target_columns_are_forward_looking(sample_ohlcv):
-    """Confirm targets DO use future data (they should — they're labels)."""
+    """Confirm targets DO use future data (they should -- they're labels)."""
     spike_pos = 100
     df_spike = _inject_spike(sample_ohlcv.copy(), spike_pos, multiplier=20.0)
     df_clean = sample_ohlcv.copy()
@@ -118,5 +118,5 @@ def test_no_future_close_in_features(sample_ohlcv):
         corr = abs(series[valid].corr(future_close[valid]))
         assert corr < 0.999, (
             f"Feature '{col}' has suspiciously high correlation ({corr:.4f}) "
-            f"with future close — possible lookahead leak"
+            f"with future close -- possible lookahead leak"
         )

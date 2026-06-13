@@ -31,6 +31,9 @@ def _download_single(ticker: str, period: str = "max") -> Optional[pd.DataFrame]
             logger.warning("empty_download", ticker=ticker)
             return None
 
+        # yfinance >= 0.2 returns MultiIndex columns like ('Close', 'SPY') for single tickers
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
         df.columns = [c.lower() for c in df.columns]
         df = df[OHLCV_COLS].copy()
         df.index = pd.to_datetime(df.index).tz_localize(None)

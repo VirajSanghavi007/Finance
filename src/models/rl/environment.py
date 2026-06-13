@@ -28,7 +28,7 @@ class TradingEnv(gym.Env if GYM_AVAILABLE else object):
     Actions: 0=short, 1=flat, 2=long  (discrete, maps to -1/0/+1 signal)
     Observations: feature_vector (n_features,) + portfolio_state (4,)
       portfolio_state = [position, unrealized_pnl_pct, cash_pct, drawdown_pct]
-    Reward: risk-adjusted daily PnL — transaction-cost penalized
+    Reward: risk-adjusted daily PnL -- transaction-cost penalized
     """
 
     metadata = {"render_modes": []}

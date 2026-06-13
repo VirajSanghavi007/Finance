@@ -22,7 +22,7 @@ from src.data.pipeline.storage            import save_features
 
 logger = get_logger(__name__)
 
-# Columns that are TARGETS — never used as model inputs
+# Columns that are TARGETS -- never used as model inputs
 TARGET_COLS = TB_TARGET_COLS
 
 
@@ -37,7 +37,7 @@ def engineer_features(
 
     STRICT NO-LOOKAHEAD RULE:
       All features at time T use only data available at end-of-day T.
-      Target variables are shifted forward (use data[T+1]) — NEVER input features.
+      Target variables are shifted forward (use data[T+1]) -- NEVER input features.
     """
     logger.info("engineering_features", ticker=ticker, rows=len(df))
 
@@ -87,7 +87,7 @@ def engineer_features(
         sent_trend  = feature_df["sent_score_1d"].apply(np.sign)
         feature_df["sent_diverge"] = (price_trend != sent_trend).astype(float)
 
-    # ── Targets — triple barrier labels (MUST NOT be used as features) ────────
+    # ── Targets -- triple barrier labels (MUST NOT be used as features) ────────
     targets = compute_triple_barrier_targets(df)
     feature_df = pd.concat([feature_df, targets], axis=1)
 

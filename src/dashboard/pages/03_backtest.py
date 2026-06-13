@@ -1,4 +1,4 @@
-﻿“””Backtest results page — WFO fold performance, metrics table.”””
+﻿"""Backtest results page -- WFO fold performance, metrics table."""
 from __future__ import annotations
 
 import sys as _sys
@@ -127,7 +127,7 @@ def render():
             n = len(fold_data)
             col4.metric("Win Folds", f"{(sharpes > 1.0).sum()}/{n}")
 
-    # Equity curve chart — real benchmark data
+    # Equity curve chart -- real benchmark data
     st.subheader("SPY Benchmark Equity Curve")
     spy_r = _load_equity_for_ticker("SPY")
     if spy_r is not None and len(spy_r) > 10:
@@ -137,4 +137,5 @@ def render():
         st.warning("Download SPY data first: `python scripts/fetch_data.py`")
 
 
-render()
+if __name__ == "__main__":
+    render()

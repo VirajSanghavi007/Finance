@@ -33,6 +33,8 @@ def _split(feat_df: pd.DataFrame, test_frac: float = 0.15):
     split = int(len(feat_df) * (1 - test_frac))
     feat_cols = get_feature_columns(feat_df)
     X = feat_df[feat_cols].fillna(0)
+    # Drop any remaining non-numeric columns (e.g. string categoricals)
+    X = X.select_dtypes(include=[np.number])
     y = _get_target(feat_df)
     return X.iloc[:split], y.iloc[:split], X.iloc[split:], y.iloc[split:]
 

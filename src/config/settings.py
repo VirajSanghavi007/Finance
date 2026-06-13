@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # API Keys (all optional — system degrades gracefully without them)
+    # API Keys (all optional -- system degrades gracefully without them)
     alpha_vantage_key: Optional[str] = Field(default=None, alias="ALPHA_VANTAGE_KEY")
     finnhub_key:       Optional[str] = Field(default=None, alias="FINNHUB_KEY")
     fred_api_key:      Optional[str] = Field(default=None, alias="FRED_API_KEY")

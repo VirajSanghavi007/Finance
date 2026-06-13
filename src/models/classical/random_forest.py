@@ -19,7 +19,7 @@ LABEL_UNMAP = {0: -1, 1: 0, 2: 1}
 
 
 class RandomForestModel(BaseModel):
-    """Random Forest 3-class classifier — diversity member in ensemble."""
+    """Random Forest 3-class classifier -- diversity member in ensemble."""
 
     def __init__(self, n_estimators: int = 300, max_depth: int = 8) -> None:
         self.n_estimators = n_estimators

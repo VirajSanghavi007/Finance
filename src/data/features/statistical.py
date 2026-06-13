@@ -40,20 +40,28 @@ def _hurst_exponent(ts: np.ndarray) -> float:
     return float(np.clip(slope, 0.0, 1.0))
 
 
-def _rolling_hurst(close: pd.Series, window: int = 60) -> pd.Series:
+def _rolling_hurst(close: pd.Series, window: int = 60, stride: int = 5) -> pd.Series:
+    """Compute every `stride` rows then forward-fill -- Hurst changes slowly."""
     log_ret = np.log(close / close.shift(1)).dropna()
     result = pd.Series(np.nan, index=close.index)
-    for i in range(window, len(close)):
+    indices = range(window, len(close), stride)
+    for i in indices:
         subset = log_ret.iloc[max(0, i - window):i].values
         result.iloc[i] = _hurst_exponent(subset)
-    return result
+    return result.ffill()
 
 
 def _autocorr(series: pd.Series, lag: int, window: int = 60) -> pd.Series:
-    return series.rolling(window).apply(
-        lambda x: pd.Series(x).autocorr(lag=lag) if len(x) > lag else np.nan,
-        raw=False,
-    )
+    """Numpy-based autocorr -- avoids creating a pd.Series per window."""
+    def _np_autocorr(x: np.ndarray) -> float:
+        if len(x) <= lag + 2:
+            return np.nan
+        x = x - x.mean()
+        denom = np.dot(x, x)
+        if denom == 0:
+            return np.nan
+        return float(np.dot(x[:-lag], x[lag:]) / denom)
+    return series.rolling(window).apply(_np_autocorr, raw=True)
 
 
 def _jarque_bera(series: pd.Series, window: int = 60) -> pd.Series:
@@ -90,19 +98,22 @@ def _ou_half_life(close: pd.Series, window: int = 60) -> pd.Series:
     return log_p.rolling(window).apply(hl, raw=True)
 
 
-def _adf_stat(close: pd.Series, window: int = 60) -> pd.Series:
+def _adf_stat(close: pd.Series, window: int = 60, stride: int = 5) -> pd.Series:
+    """ADF with fixed maxlag=1 and stride -- autolag='AIC' is O(N²) per window."""
     from statsmodels.tsa.stattools import adfuller  # type: ignore
 
-    def adf(x: np.ndarray) -> float:
+    result = pd.Series(np.nan, index=close.index)
+    arr = close.values
+    for i in range(window, len(arr), stride):
+        x = arr[i - window:i]
         if len(x) < 15:
-            return np.nan
+            continue
         try:
-            res = adfuller(x, autolag="AIC")
-            return float(res[0])
+            res = adfuller(x, maxlag=1, autolag=None)
+            result.iloc[i] = float(res[0])
         except Exception:
-            return np.nan
-
-    return close.rolling(window).apply(adf, raw=True)
+            pass
+    return result.ffill()
 
 
 def compute_statistical_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -114,15 +125,12 @@ def compute_statistical_features(df: pd.DataFrame) -> pd.DataFrame:
     for w in [20, 50, 200]:
         out[f"stat_zscore_{w}"] = _zscore(close, w)
 
-    # Hurst exponent (slow — computed with rolling window)
+    # Hurst exponent (slow -- computed with rolling window)
     out["stat_hurst_60"] = _rolling_hurst(close, 60)
 
     # Autocorrelation of returns
     for lag in [1, 2, 5, 10]:
-        out[f"stat_autocorr_{lag}"] = log_ret.rolling(63).apply(
-            lambda x: pd.Series(x).autocorr(lag=lag) if len(x) > lag + 2 else np.nan,
-            raw=False,
-        )
+        out[f"stat_autocorr_{lag}"] = _autocorr(log_ret, lag=lag, window=63)
 
     # Skew and kurtosis of returns
     out["stat_skew_21"] = log_ret.rolling(21).skew()

@@ -18,8 +18,8 @@ def deflated_sharpe_ratio(
     Deflated Sharpe Ratio (Bailey & López de Prado, 2014).
 
     Corrects for:
-      1. Multiple-testing bias — penalises strategies selected from N_trials
-      2. Non-normality — skewness and excess kurtosis of returns
+      1. Multiple-testing bias -- penalises strategies selected from N_trials
+      2. Non-normality -- skewness and excess kurtosis of returns
 
     Returns probability ∈ [0,1] that the true SR exceeds the expected
     maximum under the null of N_trials independent draws.
@@ -64,7 +64,12 @@ def deflated_sharpe_ratio(
 
 
 def _sharpe(returns: pd.Series, rf_daily: float) -> float:
-    excess = returns - rf_daily
+    # Use only active (non-zero) return days to avoid flat/cash days
+    # inflating the risk-free drag and collapsing std to near-zero.
+    active = returns[returns != 0]
+    if len(active) < 5:
+        active = returns
+    excess = active - rf_daily
     std = excess.std()
     if std == 0 or math.isnan(std):
         return 0.0

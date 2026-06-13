@@ -1,9 +1,9 @@
 """
-Conservative Q-Learning (CQL) — Offline RL for trading.
+Conservative Q-Learning (CQL) -- Offline RL for trading.
 (Kumar et al., NeurIPS 2020)
 
 Standard RL requires live interaction: the agent tries actions, observes rewards,
-updates. That's fine for games but terrible for trading — you can't "try" bad trades.
+updates. That's fine for games but terrible for trading -- you can't "try" bad trades.
 
 Offline RL (CQL) solves this: train from a STATIC dataset of historical trajectories.
 The CQL penalty prevents overestimating Q-values at (state, action) pairs that don't
@@ -14,11 +14,11 @@ Conservative loss:
 
   - First term: penalises high Q-values at actions NOT in the dataset
   - Second term: rewards high Q-values at actions that WERE taken
-  - Together: conservative estimate — only trust what you've seen
+  - Together: conservative estimate -- only trust what you've seen
 
 Architecture:
   State:  (last 30 bars × top 20 features) + position + drawdown  →  flat vector
-  Action: Discrete(3) — {0=short, 1=flat, 2=long}
+  Action: Discrete(3) -- {0=short, 1=flat, 2=long}
   Q-net:  MLP(state_dim → 256 → 128 → 3), double Q-networks for stability
   Reward: same as TradingEnv but computed offline from labels
 
@@ -172,7 +172,7 @@ class OfflineRLAgent(BaseModel):
             return {"status": "insufficient_data", "n_states": n_states}
 
         # Actions from y_train labels (shifted to align with states window).
-        # y_train may be shorter than X_train — use the minimum to guarantee alignment.
+        # y_train may be shorter than X_train -- use the minimum to guarantee alignment.
         y_tail   = y_train.iloc[self.seq_len - 1:].map(LABEL_MAP).fillna(1)
         n_states = min(n_states, len(y_tail))   # enforce consistent length
         states   = states[:n_states]
@@ -186,7 +186,7 @@ class OfflineRLAgent(BaseModel):
             rets = np.sign(y_aligned - 1) * 0.001   # tiny proxy reward
         rewards = self._compute_rewards(actions, rets.astype(np.float32))
 
-        # Next states — terminal state gets zero vector (no bootstrapping at end)
+        # Next states -- terminal state gets zero vector (no bootstrapping at end)
         next_states = np.vstack([states[1:], np.zeros_like(states[-1:])])
 
         S  = torch.tensor(states,      dtype=torch.float32)

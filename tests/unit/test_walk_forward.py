@@ -30,7 +30,7 @@ def test_folds_sorted():
 
 
 def test_insufficient_history_raises():
-    dates = pd.bdate_range("2020-01-01", "2020-06-01")  # ~100 days — too short
+    dates = pd.bdate_range("2020-01-01", "2020-06-01")  # ~100 days -- too short
     folds = _generate_folds(dates, train_days=730, test_days=91, step_days=91, min_history=1000)
     assert len(folds) == 0, "Should not generate folds with insufficient history"
 

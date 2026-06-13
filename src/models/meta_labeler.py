@@ -155,7 +155,7 @@ class MetaLabeler:
         # Only use columns the model was trained on
         cols = [c for c in self._feature_names if c in X_aug.columns]
         p = self._model.predict_proba(X_aug[cols].fillna(0))
-        # p shape: (N, 2) — return P(class=1) column
+        # p shape: (N, 2) -- return P(class=1) column
         return p[:, 1] if p.shape[1] == 2 else p[:, 0]
 
     def predict_with_size(

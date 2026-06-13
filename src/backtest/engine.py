@@ -114,7 +114,7 @@ class BacktestEngine:
                 )
 
             # Close positions that have a sell order
-            # (handled by order_book — in this simplified version we close
+            # (handled by order_book -- in this simplified version we close
             # positions where a new opposing signal was submitted)
 
             # ── 2. Mark to market at close ────────────────────────────────────

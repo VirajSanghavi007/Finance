@@ -1,16 +1,16 @@
 """
 Options-Derived Features
 
-Options markets are forward-looking — "smart money" trades here first.
+Options markets are forward-looking -- "smart money" trades here first.
 These features extract the option market's view on a stock:
 
-  opt_iv_atm        — At-the-money implied volatility (30-day)
-  opt_iv_skew       — IV skew = IV(put 10-delta) − IV(call 10-delta)
+  opt_iv_atm        -- At-the-money implied volatility (30-day)
+  opt_iv_skew       -- IV skew = IV(put 10-delta) − IV(call 10-delta)
                       Positive skew = market pricing in downside risk
-  opt_pcr_vol       — Put-Call Ratio by volume (>1 = bearish, <1 = bullish)
-  opt_pcr_oi        — Put-Call Ratio by open interest
-  opt_iv_rv_spread  — IV − Realised Vol: positive = expensive options (mean-revert)
-  opt_term_spread   — IV(30d) − IV(7d): negative = inverted term structure (fear)
+  opt_pcr_vol       -- Put-Call Ratio by volume (>1 = bearish, <1 = bullish)
+  opt_pcr_oi        -- Put-Call Ratio by open interest
+  opt_iv_rv_spread  -- IV − Realised Vol: positive = expensive options (mean-revert)
+  opt_term_spread   -- IV(30d) − IV(7d): negative = inverted term structure (fear)
 
 Data source: yfinance options chain (free, no API key needed)
 Rate limit: ~2 calls/min per ticker (cached to disk)
@@ -174,7 +174,7 @@ def compute_options_features(
     far_feats  = _compute_chain_features(chain_data[expiries[1]], current_price) \
                  if len(expiries) >= 2 else {}
 
-    # Broadcast to last 5 bars (latest data — older bars get NaN)
+    # Broadcast to last 5 bars (latest data -- older bars get NaN)
     n_fill = min(5, len(result))
     for col, val in near_feats.items():
         result.loc[result.index[-n_fill:], col] = val

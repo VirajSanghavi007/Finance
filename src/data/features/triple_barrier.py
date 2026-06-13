@@ -37,10 +37,10 @@ def triple_barrier_labels(
 
     Returns:
         DataFrame with columns:
-          label       — final label: +1, -1, 0
-          ret         — actual return over the holding period
-          t_exit      — timestamp when barrier was hit
-          barrier_hit — 'pt', 'sl', or 'timeout'
+          label       -- final label: +1, -1, 0
+          ret         -- actual return over the holding period
+          t_exit      -- timestamp when barrier was hit
+          barrier_hit -- 'pt', 'sl', or 'timeout'
     """
     pt_mult, sl_mult = pt_sl
     out_label   : list[int]   = []
@@ -118,18 +118,18 @@ def compute_triple_barrier_targets(
     Drops the old naive sign(forward return) approach.
 
     Returns a DataFrame with:
-      target_1d       — next-day log return sign (kept for compatibility)
-      target_5d       — 5-day log return sign (kept for compatibility)
-      target_ret_1d   — raw next-day log return
-      target_ret_5d   — raw 5-day log return
-      target_vol_adj_1d — vol-adjusted 1d return
-      target_tb       — triple barrier label (+1/-1/0) ← new primary target
-      target_tb_ret   — actual return until barrier hit  ← new
-      target_tb_barrier — which barrier was hit          ← new (for analysis)
+      target_1d       -- next-day log return sign (kept for compatibility)
+      target_5d       -- 5-day log return sign (kept for compatibility)
+      target_ret_1d   -- raw next-day log return
+      target_ret_5d   -- raw 5-day log return
+      target_vol_adj_1d -- vol-adjusted 1d return
+      target_tb       -- triple barrier label (+1/-1/0) ← new primary target
+      target_tb_ret   -- actual return until barrier hit  ← new
+      target_tb_barrier -- which barrier was hit          ← new (for analysis)
     """
     close = df["close"]
 
-    # Daily vol: rolling std of log returns (no lookahead — uses only past)
+    # Daily vol: rolling std of log returns (no lookahead -- uses only past)
     log_ret   = np.log(close / close.shift(1))
     daily_vol = log_ret.rolling(vol_window, min_periods=5).std()
 

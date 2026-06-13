@@ -1,6 +1,6 @@
 """
 Split Conformal Prediction for ensemble signals.
-(Angelopoulos & Bates, 2022 — distribution-free coverage guarantees)
+(Angelopoulos & Bates, 2022 -- distribution-free coverage guarantees)
 
 Problem: the softmax confidence from our ensemble (e.g. 0.72) is not a
 real probability. It might actually be right only 55% of the time.
@@ -101,7 +101,7 @@ class ConformalPredictor:
             probas : (N, 3) softmax from ensemble.
 
         Returns:
-            pred_sets     : list[list[int]] — classes included in prediction set
+            pred_sets     : list[list[int]] -- classes included in prediction set
             conf_scores   : (N,) calibrated confidence ∈ [0, 1]
         """
         if not self._fitted or self._threshold is None:
@@ -118,7 +118,7 @@ class ConformalPredictor:
             # Include class c if 1 − P(c) ≤ threshold
             included = [c for c in range(3) if (1.0 - row[c]) <= threshold]
             if not included:
-                # Never return empty set — include the most probable class
+                # Never return empty set -- include the most probable class
                 included = [int(np.argmax(row))]
             pred_sets.append(included)
 

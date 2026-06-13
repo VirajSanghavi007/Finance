@@ -1,5 +1,5 @@
 """
-AlgoTrade-X Dashboard — Bloomberg-inspired terminal UI.
+AlgoTrade-X Dashboard -- Bloomberg-inspired terminal UI.
 Run: streamlit run src/dashboard/app.py
 """
 from __future__ import annotations
@@ -78,25 +78,30 @@ _PAGE_MAP = {
     "Settings":      "src.dashboard.pages.07_settings",
 }
 
+import importlib.util
+from pathlib import Path
+
+_FILE_MAP = {
+    "src.dashboard.pages.01_overview":       Path(__file__).parent / "pages" / "01_overview.py",
+    "src.dashboard.pages.02_signals":        Path(__file__).parent / "pages" / "02_signals.py",
+    "src.dashboard.pages.03_backtest":       Path(__file__).parent / "pages" / "03_backtest.py",
+    "src.dashboard.pages.04_risk":           Path(__file__).parent / "pages" / "04_risk.py",
+    "src.dashboard.pages.05_models":         Path(__file__).parent / "pages" / "05_models.py",
+    "src.dashboard.pages.06_explainability": Path(__file__).parent / "pages" / "06_explainability.py",
+    "src.dashboard.pages.07_settings":       Path(__file__).parent / "pages" / "07_settings.py",
+}
+
 module_name = _PAGE_MAP[page]
-if module_name not in sys.modules:
-    import importlib.util
-    from pathlib import Path
-    # Map module name to file path
-    file_map = {
-        "src.dashboard.pages.01_overview":      Path(__file__).parent / "pages" / "01_overview.py",
-        "src.dashboard.pages.02_signals":       Path(__file__).parent / "pages" / "02_signals.py",
-        "src.dashboard.pages.03_backtest":      Path(__file__).parent / "pages" / "03_backtest.py",
-        "src.dashboard.pages.04_risk":          Path(__file__).parent / "pages" / "04_risk.py",
-        "src.dashboard.pages.05_models":        Path(__file__).parent / "pages" / "05_models.py",
-        "src.dashboard.pages.06_explainability":Path(__file__).parent / "pages" / "06_explainability.py",
-        "src.dashboard.pages.07_settings":      Path(__file__).parent / "pages" / "07_settings.py",
-    }
-    spec = importlib.util.spec_from_file_location(module_name, file_map[module_name])
-    mod  = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = mod
+# Always reload fresh -- Streamlit reruns app.py on every interaction so
+# caching in sys.modules just freezes stale or broken module objects.
+sys.modules.pop(module_name, None)
+spec = importlib.util.spec_from_file_location(module_name, _FILE_MAP[module_name])
+mod  = importlib.util.module_from_spec(spec)
+try:
     spec.loader.exec_module(mod)
-else:
-    mod = sys.modules[module_name]
+except Exception as _page_err:
+    st.error(f"Page failed to load: {_page_err}")
+    st.stop()
+sys.modules[module_name] = mod
 
 mod.render()

@@ -1,4 +1,4 @@
-﻿“””Explainability page — SHAP, drift monitor, audit log.”””
+﻿"""Explainability page -- SHAP, drift monitor, audit log."""
 from __future__ import annotations
 
 import sys as _sys
@@ -149,4 +149,5 @@ def render():
             st.info(f"Audit log not yet populated. Start paper trading to generate records.")
 
 
-render()
+if __name__ == "__main__":
+    render()

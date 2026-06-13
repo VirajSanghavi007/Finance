@@ -67,15 +67,16 @@ def compute_cross_asset_features(
         out["ca_vix_level"]   = vix_close.reindex(df.index).ffill()
         # VIX regime
         vix = out["ca_vix_level"]
+        # 0=low, 1=mid, 2=high, 3=spike -- integer so all models can consume it
         out["ca_vix_regime"] = pd.cut(
             vix,
             bins=[0, 15, 25, 35, np.inf],
-            labels=["low", "mid", "high", "spike"],
-        ).astype(str)
+            labels=[0, 1, 2, 3],
+        ).astype(float)
     else:
         out["ca_corr_vix_21"] = np.nan
         out["ca_vix_level"]   = np.nan
-        out["ca_vix_regime"]  = "unknown"
+        out["ca_vix_regime"]  = np.nan
 
     if gld_close is not None:
         gld_ret = np.log(gld_close / gld_close.shift(1)).reindex(df.index)

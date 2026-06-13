@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class RegimeDetector:
     """
     Online regime detector: low / mid / high volatility (0 / 1 / 2).
-    Uses expanding-window quantile on realized vol — no lookahead.
+    Uses expanding-window quantile on realized vol -- no lookahead.
 
     Also computes:
       - Trend regime: bullish (1), bearish (-1), sideways (0) via SMA crossover
@@ -34,7 +34,7 @@ class RegimeDetector:
     def vol_regime(self, returns: pd.Series) -> pd.Series:
         """
         Returns 0 (low-vol), 1 (mid-vol), 2 (high-vol) per bar.
-        Strictly expanding window — no lookahead.
+        Strictly expanding window -- no lookahead.
         """
         ann_vol = returns.rolling(self.vol_window, min_periods=self.min_periods).std() * np.sqrt(TRADING_DAYS)
         ann_vol = ann_vol.dropna()

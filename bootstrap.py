@@ -38,22 +38,16 @@ def check_and_prompt_keys(settings) -> None:
     missing = [(name, url, desc) for name, val, url, desc in key_info if not val]
 
     if not missing:
-        print("  ✓ All optional API keys found in .env")
+        print("  [OK] All optional API keys found in .env")
         return
 
     print("\n  Optional API keys (all free, takes ~30s each to register):")
-    print("  ─" * 35)
+    print("  -" * 35)
     env_path = Path(".env")
 
     for name, url, desc in missing:
-        print(f"\n  {name}  ← used for: {desc}")
-        print(f"  Sign up: {url}")
-        value = input(f"  Paste your key (or press Enter to skip): ").strip()
-        if value:
-            # Append to .env
-            with env_path.open("a") as f:
-                f.write(f"\n{name}={value}\n")
-            print(f"  ✓ Saved {name} to .env")
+        print(f"  [SKIP] {name} not set -- {desc} will be disabled")
+        print(f"         Add it later: {url}")
 
     # Reload settings after updates
     get_settings.cache_clear()  # type: ignore[attr-defined]
@@ -71,9 +65,9 @@ def main() -> None:
     configure_logging(log_level=args.log_level, log_file=DATA_DIR / "logs" / "bootstrap.log")
     logger = get_logger("bootstrap")
 
-    print("\n" + "═" * 60)
-    print("  AlgoTrade-X  —  Bootstrap")
-    print("═" * 60)
+    print("\n" + "=" * 60)
+    print("  AlgoTrade-X  --  Bootstrap")
+    print("=" * 60)
 
     settings = get_settings()
     available = settings.available_sources()
@@ -101,14 +95,14 @@ def main() -> None:
         try:
             from src.data.features.engineer import run_all_features
             feat_results = run_all_features()
-            print(f"  ✓ Features computed for {len(feat_results)} assets")
+            print(f"  [OK] Features computed for {len(feat_results)} assets")
         except ImportError:
-            print("  Feature engineering modules not yet built — skipping")
+            print("  Feature engineering modules not yet built -- skipping")
         except Exception as exc:
             logger.warning("feature_eng_failed", error=str(exc))
-            print(f"  ⚠ Feature engineering failed: {exc}")
+            print(f"  [WARN] Feature engineering failed: {exc}")
     else:
-        print("  ⚠ Not enough equity data for feature engineering — check API access")
+        print("  [WARN] Not enough equity data for feature engineering -- check API access")
 
     print("\n  Bootstrap complete. Run:")
     print("    docker-compose up           # full stack")

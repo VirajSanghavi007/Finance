@@ -68,7 +68,7 @@ class SHAPAnalyzer:
             return None
 
     def top_features(self, X: pd.DataFrame, n: int = 10) -> pd.Series:
-        """Mean absolute SHAP values across samples — top N features."""
+        """Mean absolute SHAP values across samples -- top N features."""
         df = self.explain(X)
         if df is None:
             return pd.Series(dtype=float)

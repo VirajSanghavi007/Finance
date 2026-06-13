@@ -92,7 +92,7 @@ class SimOrderBook:
         """
         Process all pending orders against the given open prices.
         Returns list of fills generated this bar.
-        Rule: fill at open[t+1] — this is called at the START of the next bar.
+        Rule: fill at open[t+1] -- this is called at the START of the next bar.
         """
         fills: list[Fill] = []
         remaining: list[Order] = []

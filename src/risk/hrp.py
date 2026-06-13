@@ -2,9 +2,9 @@
 Hierarchical Risk Parity (López de Prado, Journal of Portfolio Management 2016)
 
 HRP builds portfolios via three steps:
-  1. Tree clustering   — single-linkage hierarchical clustering on correlation matrix
-  2. Quasi-diagonalisation — reorder assets so similar ones are adjacent
-  3. Recursive bisection   — allocate weight by inverse variance, recursively
+  1. Tree clustering   -- single-linkage hierarchical clustering on correlation matrix
+  2. Quasi-diagonalisation -- reorder assets so similar ones are adjacent
+  3. Recursive bisection   -- allocate weight by inverse variance, recursively
 
 Advantages over Markowitz:
   - No matrix inversion (numerically stable even when assets are correlated)

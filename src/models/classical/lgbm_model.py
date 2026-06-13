@@ -108,8 +108,7 @@ class LightGBMModel(BaseModel):
                 clf.fit(
                     X_all.iloc[train_idx].fillna(0), y_all.iloc[train_idx],
                     eval_set=[(X_all.iloc[val_idx].fillna(0), y_all.iloc[val_idx])],
-                    callbacks=[lgb.early_stopping(20, verbose=False),
-                               lgb.log_evaluation(-1)],
+                    callbacks=[lgb.log_evaluation(-1)],
                 )
                 preds  = clf.predict(X_all.iloc[val_idx].fillna(0))
                 aln    = (y_all.iloc[val_idx].values == preds).astype(float) * 2 - 1

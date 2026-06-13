@@ -12,6 +12,8 @@ data/processed/
 data/models/
 data/logs/
 data/backtest_results/
+data/*.db
+data/*.sqlite
 
 # Model artifacts
 artifacts/

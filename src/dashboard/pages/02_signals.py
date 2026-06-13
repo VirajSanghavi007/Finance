@@ -1,4 +1,4 @@
-﻿“””Signals page — detailed signal table + regime overlay.”””
+﻿"""Signals page -- detailed signal table + regime overlay."""
 from __future__ import annotations
 
 import sys as _sys
@@ -78,7 +78,7 @@ def render():
         pass
 
     # Current signal banner
-    sig_label = {1: “▲ LONG”, 0: “— FLAT”, -1: “▼ SHORT”}.get(live_sig, “—“)
+    sig_label = {1: "▲ LONG", 0: "-- FLAT", -1: "▼ SHORT"}.get(live_sig, "--")
     sig_color = {1: GREEN, 0: AMBER, -1: RED}.get(live_sig, AMBER)
     st.markdown(
         f'<div style="background:{SURFACE};border-left:4px solid {sig_color};'
@@ -91,7 +91,7 @@ def render():
 
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.plotly_chart(signal_overlay(close, signals, title=f”{selected} — Price & Signals”),
+        st.plotly_chart(signal_overlay(close, signals, title=f"{selected} -- Price & Signals"),
                         use_container_width=True)
         st.plotly_chart(regime_timeline(regime), use_container_width=True)
     with col2:
@@ -107,7 +107,7 @@ def render():
 
         # Compute realized hit rate vs close direction
         fwd_ret = close.pct_change().shift(-1)
-        correct = (signals * fwd_ret.sign()).clip(lower=0)
+        correct = (signals * fwd_ret.apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))).clip(lower=0)
         non_zero = signals[signals != 0]
         if len(non_zero) > 0:
             wr = float((correct[signals != 0] > 0).mean())
@@ -118,4 +118,5 @@ def render():
         st.metric("Data Points", f"{total:,}")
 
 
-render()
+if __name__ == "__main__":
+    render()

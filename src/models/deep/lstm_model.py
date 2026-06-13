@@ -195,7 +195,7 @@ class LSTMModel(BaseModel):
         return np.array([LABEL_UNMAP[int(m)] for m in mapped])
 
     def get_feature_importance(self) -> pd.Series:
-        # LSTM doesn't have built-in feature importance — return uniform
+        # LSTM doesn't have built-in feature importance -- return uniform
         if not self._feature_names:
             return pd.Series(dtype=float)
         n = len(self._feature_names)

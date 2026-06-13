@@ -49,7 +49,7 @@ class PaperBroker(BaseBroker):
         if order.side == "buy":
             total_debit = trade_value + cost
             if total_debit > self._cash:
-                # Partial fill — buy only what we can afford
+                # Partial fill -- buy only what we can afford
                 affordable_qty = (self._cash * 0.999) / (fill_price + cost / order.qty)
                 order.qty = max(0.0, affordable_qty)
                 trade_value = fill_price * order.qty

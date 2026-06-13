@@ -84,7 +84,7 @@ class PositionSizer:
     ) -> float:
         """
         Main entry: return signed position size given a signal.
-        realized_vol_daily is σ in daily terms — converted to annual internally.
+        realized_vol_daily is σ in daily terms -- converted to annual internally.
         """
         if signal == 0:
             return 0.0
