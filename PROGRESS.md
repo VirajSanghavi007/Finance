@@ -1,8 +1,31 @@
 # AlgoTrade-X Build Progress
 
-## Status: ALL PHASES COMPLETE ✅
-## Last updated: 2026-06-12
-## Test suite: 117 passed, 0 failed
+## Status: ALL PHASES COMPLETE + TRAINING IN PROGRESS ✅
+## Last updated: 2026-06-13
+## Test suite: 144 passed, 0 failed
+
+### Training Status (2026-06-13)
+- Trained tickers (all 3 models): SPY, QQQ, AAPL, MSFT, NVDA, GOOGL, AMZN (7/25)
+- Training in progress: META, JPM, GS, XOM, BRK-B, XLF, XLK, XLE, XLV, XLI, ^VIX, ^TNX, GLD, TLT, BTC_USDT, ETH_USDT, SOL_USDT, BNB_USDT
+- Ensemble stackers built: SPY, QQQ, AAPL, MSFT, NVDA, GOOGL, AMZN
+
+### Backtest Results (7 tickers, 2026-06-13)
+- Mean Sharpe: 1.51 | Median Sharpe: 0.76 | 100% positive Sharpe
+- Top performers: AMZN (Sharpe=2.90), NVDA (2.88), MSFT (2.64)
+- SPY (0.57), GOOGL (0.76), QQQ (0.30), AAPL (0.50)
+
+### Live Paper Trading
+- Alpaca paper account: $100k, ACTIVE
+- Market opens Monday 2026-06-15 09:30 ET
+- Script: python scripts/start_paper_trading.py
+
+### GitHub
+- https://github.com/VirajSanghavi007/Finance (all code pushed, no .env)
+- Latest commit: backtest + ensemble scripts
+
+### Render Deployment
+- render.yaml created — deploy from Render.com dashboard
+- Connect GitHub repo, auto-deploys on push
 
 ---
 
