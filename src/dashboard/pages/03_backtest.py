@@ -116,10 +116,12 @@ def render():
             sharpes = pd.to_numeric(fold_data[sharpe_col], errors="coerce").dropna()
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Avg Sharpe", f"{sharpes.mean():.2f}")
-            ret_col = "Total Ret %" if "Total Ret %" in fold_data.columns else None
+            # Prefer CAGR % over Total Ret %
+            ret_col = next((c for c in ["CAGR %", "Total Ret %"] if c in fold_data.columns), None)
+            ret_label = "Avg CAGR" if ret_col == "CAGR %" else "Avg Return"
             if ret_col:
                 rets = pd.to_numeric(fold_data[ret_col], errors="coerce").dropna()
-                col2.metric("Avg Return", f"{rets.mean():.1f}%")
+                col2.metric(ret_label, f"{rets.mean():.1f}%")
             dd_col = "Max DD %" if "Max DD %" in fold_data.columns else None
             if dd_col:
                 dds = pd.to_numeric(fold_data[dd_col], errors="coerce").dropna()

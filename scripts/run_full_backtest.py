@@ -237,13 +237,14 @@ def main() -> None:
         ],
         "folds": [
             {
-                "Fold":        i + 1,
-                "Ticker":      r.get("ticker", "?"),
-                "Sharpe":      round(r.get("sharpe_ratio", 0), 3),
-                "Total Ret %": round(r.get("total_return", 0) * 100, 2),
-                "Max DD %":    round(abs(r.get("max_drawdown", 0)) * 100, 2),
-                "N Trades":    r.get("total_trades", 0),
-                "Model":       r.get("model_used", "?"),
+                "Fold":     i + 1,
+                "Ticker":   r.get("ticker", "?"),
+                "Sharpe":   round(r.get("sharpe_ratio", 0), 3),
+                "CAGR %":   round(r.get("cagr", 0) * 100, 1),
+                "Max DD %": round(abs(r.get("max_drawdown", 0)) * 100, 1),
+                "Win Rate": round(r.get("win_rate", 0) * 100, 1),
+                "N Trades": r.get("total_trades", 0),
+                "Model":    r.get("model_used", "?"),
             }
             for i, r in enumerate(results)
         ],
