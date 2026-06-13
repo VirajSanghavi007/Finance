@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -196,7 +196,7 @@ def main() -> None:
         "median_sharpe": float(np.median(sharpes)),
         "pct_positive":  float(sum(s > 0 for s in sharpes) / len(sharpes)),
         "pct_above_1":   float(sum(s > 1 for s in sharpes) / len(sharpes)),
-        "run_at":        datetime.utcnow().isoformat(),
+        "run_at":        datetime.now(timezone.utc).isoformat(),
     }
 
     print(f"\n{'='*55}")
@@ -218,7 +218,7 @@ def main() -> None:
     # Save JSON results
     out_dir = Path("data/backtest_results")
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     out_path = out_dir / f"wfo_{ts}.json"
 
     # Convert numpy types for JSON serialization

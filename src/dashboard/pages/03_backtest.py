@@ -1,4 +1,4 @@
-﻿"""Backtest results page -- WFO fold performance, metrics table."""
+"""Backtest results page -- WFO fold performance, per-ticker breakdown."""
 from __future__ import annotations
 
 import sys as _sys
@@ -7,136 +7,181 @@ _root = _Path(__file__).resolve().parents[3]
 if str(_root) not in _sys.path:
     _sys.path.insert(0, str(_root))
 
-
+import json
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
-from src.dashboard.theme import AMBER, GREEN, RED, SURFACE
+from src.dashboard.theme import AMBER, GREEN, RED, SURFACE, BORDER, MUTED, TEXT, PLOTLY_TEMPLATE
 from src.dashboard.components.charts import equity_curve
 
 
-def _load_backtest_results() -> pd.DataFrame | None:
-    """Try to load saved backtest results from disk."""
+def _load_all_backtest_results() -> pd.DataFrame | None:
+    """Load the latest saved backtest JSON and return as DataFrame."""
     try:
         from src.config.constants import PROJECT_ROOT
-        import json
         results_dir = PROJECT_ROOT / "data" / "backtest_results"
-        files = list(results_dir.glob("*.json")) if results_dir.exists() else []
-        if files:
-            latest = sorted(files)[-1]
-            with open(latest) as f:
-                data = json.load(f)
-            if "folds" in data:
-                return pd.DataFrame(data["folds"])
+        files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
+        if not files:
+            return None
+        with open(files[-1]) as f:
+            data = json.load(f)
+        folds = data.get("folds", [])
+        if folds:
+            df = pd.DataFrame(folds)
+            # Coerce numeric
+            for col in ["Sharpe", "CAGR %", "Max DD %", "Win Rate", "N Trades"]:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+            return df
     except Exception:
         pass
     return None
 
 
-def _load_equity_for_ticker(ticker: str) -> pd.Series | None:
+def _load_benchmark_curve() -> pd.Series | None:
     try:
         from src.data.pipeline.storage import load_features
-        df = load_features(ticker)
+        df = load_features("SPY")
         if df is not None and "close" in df.columns and len(df) > 20:
-            prices  = df["close"].dropna()
-            returns = prices.pct_change().fillna(0)
-            return returns
+            return df["close"].pct_change().fillna(0).tail(504)
     except Exception:
         pass
     return None
+
+
+def _sharpe_color(val: float) -> str:
+    if val >= 1.5:
+        return f"color:{GREEN};font-weight:700"
+    if val >= 0.5:
+        return f"color:{AMBER}"
+    return f"color:{RED}"
 
 
 def render():
     st.markdown(
-        f'<h2 style="color:{AMBER};font-family:Consolas">BACKTEST RESULTS</h2>',
+        f'<h2 style="color:{AMBER};font-family:Consolas;letter-spacing:.12em">BACKTEST RESULTS</h2>',
         unsafe_allow_html=True,
     )
 
-    saved = _load_backtest_results()
+    fold_df = _load_all_backtest_results()
 
-    if saved is not None and len(saved) > 0:
-        st.info("Loaded saved backtest results from disk.")
-        fold_data = saved
-    else:
-        st.info("No saved backtest results. Run `python scripts/run_backtest.py` to generate them. "
-                "Showing SPY buy-and-hold benchmark as placeholder.")
+    if fold_df is None or len(fold_df) == 0:
+        st.info(
+            "No saved backtest results. Run:\n"
+            "`python scripts/run_full_backtest.py`\n\n"
+            "Showing SPY buy-and-hold benchmark as placeholder."
+        )
+        fold_df = None
 
-        # Load real SPY data as benchmark
-        spy_returns = _load_equity_for_ticker("SPY")
-        if spy_returns is not None and len(spy_returns) > 100:
-            # Build fold summary from SPY data (monthly)
-            spy_monthly = spy_returns.resample("ME").sum()
-            spy_cum     = (1 + spy_returns).cumprod()
-            n_folds     = min(8, len(spy_monthly) // 3)
-            chunk       = len(spy_returns) // max(n_folds, 1)
+    if fold_df is not None:
+        # ── Aggregate KPIs ───────────────────────────────────────────────────
+        sharpes    = fold_df["Sharpe"].dropna()
+        cagr_col   = "CAGR %" if "CAGR %" in fold_df.columns else "Total Ret %"
+        dd_col     = "Max DD %" if "Max DD %" in fold_df.columns else None
+        n_tickers  = fold_df["Ticker"].nunique() if "Ticker" in fold_df.columns else len(fold_df)
+        pct_pos    = (sharpes > 0).mean() * 100
+        pct_good   = (sharpes >= 1.0).mean() * 100
 
-            rows = []
-            for i in range(n_folds):
-                s = spy_returns.iloc[i*chunk:(i+1)*chunk]
-                if len(s) < 10:
-                    continue
-                ann  = s.mean() * 252
-                std  = s.std() * (252**0.5)
-                sh   = ann / std if std > 1e-8 else 0.0
-                dd   = ((1+s).cumprod() / (1+s).cumprod().cummax() - 1).min() * 100
-                rows.append({
-                    "Fold":        i + 1,
-                    "Start":       s.index[0].strftime("%Y-%m"),
-                    "Sharpe":      round(sh, 2),
-                    "Total Ret %": round(ann * (len(s)/252) * 100, 2),
-                    "Max DD %":    round(abs(dd), 2),
-                    "N Trades":    0,  # placeholder
-                })
-            fold_data = pd.DataFrame(rows) if rows else pd.DataFrame()
-        else:
-            fold_data = pd.DataFrame()
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Tickers", n_tickers)
+        c2.metric("Mean Sharpe", f"{sharpes.mean():.2f}")
+        c3.metric("Median Sharpe", f"{sharpes.median():.2f}")
+        c4.metric("% Positive", f"{pct_pos:.0f}%")
+        c5.metric("% Sharpe ≥ 1.0", f"{pct_good:.0f}%")
+        st.markdown("---")
 
-    if len(fold_data) > 0:
-        def color_sharpe(val):
+        # ── Ticker summary table ─────────────────────────────────────────────
+        st.markdown(
+            f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:6px">'
+            f'TICKER BREAKDOWN</div>',
+            unsafe_allow_html=True,
+        )
+
+        if "Ticker" in fold_df.columns:
+            ticker_grp = fold_df.groupby("Ticker").agg(
+                Sharpe=("Sharpe", "mean"),
+                **({cagr_col: (cagr_col, "mean")} if cagr_col in fold_df.columns else {}),
+                **({dd_col:    (dd_col,   "mean")} if dd_col in fold_df.columns else {}),
+                **({  "Win Rate": ("Win Rate", "mean")} if "Win Rate" in fold_df.columns else {}),
+                **({  "N Trades":("N Trades",  "sum")} if "N Trades" in fold_df.columns else {}),
+            ).reset_index().sort_values("Sharpe", ascending=False)
+
+            def color_sharpe_cell(val):
+                try:
+                    return _sharpe_color(float(val))
+                except Exception:
+                    return ""
+
             try:
-                v = float(val)
-                if v >= 1.5:
-                    return f"color:{GREEN}"
-                if v >= 1.0:
-                    return f"color:{AMBER}"
-                return f"color:{RED}"
-            except Exception:
-                return ""
+                styled = ticker_grp.style.map(color_sharpe_cell, subset=["Sharpe"])
+            except AttributeError:
+                styled = ticker_grp.style.applymap(color_sharpe_cell, subset=["Sharpe"])
+            st.dataframe(styled, use_container_width=True, hide_index=True)
 
-        sharpe_col = "Sharpe" if "Sharpe" in fold_data.columns else fold_data.columns[2]
-        try:
-            styled = fold_data.style.map(color_sharpe, subset=[sharpe_col])
-        except AttributeError:
-            styled = fold_data.style.applymap(color_sharpe, subset=[sharpe_col])
-        st.dataframe(styled, use_container_width=True, hide_index=True)
+        # ── Sharpe bar chart ─────────────────────────────────────────────────
+        if "Ticker" in fold_df.columns:
+            grp      = fold_df.groupby("Ticker")["Sharpe"].mean().sort_values(ascending=True)
+            bar_clrs = [GREEN if v >= 1.0 else (AMBER if v >= 0 else RED) for v in grp.values]
+            fig = go.Figure(go.Bar(
+                x=grp.values,
+                y=grp.index,
+                orientation="h",
+                marker_color=bar_clrs,
+                text=[f"{v:.2f}" for v in grp.values],
+                textposition="outside",
+                textfont=dict(color=AMBER, size=11),
+            ))
+            fig.add_vline(x=1.0, line=dict(color=AMBER, width=1, dash="dot"),
+                          annotation_text="1.0 target", annotation_font_color=AMBER)
+            fig.update_layout(
+                template=PLOTLY_TEMPLATE,
+                title="Sharpe Ratio by Ticker (WFO backtest)",
+                height=max(300, len(grp) * 30 + 60),
+                xaxis_title="Sharpe ratio",
+                margin=dict(l=80, r=60, t=40, b=30),
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-        if sharpe_col in fold_data.columns:
-            sharpes = pd.to_numeric(fold_data[sharpe_col], errors="coerce").dropna()
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Avg Sharpe", f"{sharpes.mean():.2f}")
-            # Prefer CAGR % over Total Ret %
-            ret_col = next((c for c in ["CAGR %", "Total Ret %"] if c in fold_data.columns), None)
-            ret_label = "Avg CAGR" if ret_col == "CAGR %" else "Avg Return"
-            if ret_col:
-                rets = pd.to_numeric(fold_data[ret_col], errors="coerce").dropna()
-                col2.metric(ret_label, f"{rets.mean():.1f}%")
-            dd_col = "Max DD %" if "Max DD %" in fold_data.columns else None
-            if dd_col:
-                dds = pd.to_numeric(fold_data[dd_col], errors="coerce").dropna()
-                col3.metric("Avg Max DD", f"{dds.mean():.1f}%")
-            n = len(fold_data)
-            col4.metric("Win Folds", f"{(sharpes > 1.0).sum()}/{n}")
+        # ── Detailed folds table ─────────────────────────────────────────────
+        with st.expander("All Fold Results (detailed)"):
+            display_cols = ["Ticker", "Sharpe", cagr_col, dd_col, "Win Rate", "N Trades", "Model"]
+            display_cols = [c for c in display_cols if c and c in fold_df.columns]
+            try:
+                styled2 = fold_df[display_cols].style.map(
+                    color_sharpe_cell, subset=["Sharpe"]
+                )
+            except AttributeError:
+                styled2 = fold_df[display_cols].style.applymap(
+                    color_sharpe_cell, subset=["Sharpe"]
+                )
+            st.dataframe(styled2, use_container_width=True, hide_index=True)
 
-    # Equity curve chart -- real benchmark data
-    st.subheader("SPY Benchmark Equity Curve")
-    spy_r = _load_equity_for_ticker("SPY")
+    # ── SPY Benchmark Equity Curve ───────────────────────────────────────────
+    st.markdown("---")
+    st.markdown(
+        f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:6px">'
+        f'SPY BENCHMARK EQUITY CURVE</div>',
+        unsafe_allow_html=True,
+    )
+    spy_r = _load_benchmark_curve()
     if spy_r is not None and len(spy_r) > 10:
-        st.plotly_chart(equity_curve(spy_r, title="SPY Buy-and-Hold"),
+        st.plotly_chart(equity_curve(spy_r, title="SPY Buy-and-Hold (last 2 years)"),
                         use_container_width=True)
     else:
         st.warning("Download SPY data first: `python scripts/fetch_data.py`")
+
+    # ── Run buttons ──────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown(
+        f'<div style="color:{MUTED};font-family:Consolas;font-size:12px">'
+        f'To refresh results: <code>python scripts/run_full_backtest.py</code><br/>'
+        f'To train more tickers: <code>python scripts/train_models.py --register --tickers JPM GS XOM</code>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":

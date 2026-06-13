@@ -1,4 +1,4 @@
-﻿"""Models page -- per-model performance, feature importance."""
+"""Models page -- per-model performance, feature importance, backtest Sharpe."""
 from __future__ import annotations
 
 import sys as _sys
@@ -7,40 +7,69 @@ _root = _Path(__file__).resolve().parents[3]
 if str(_root) not in _sys.path:
     _sys.path.insert(0, str(_root))
 
-
+import json
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
-from src.dashboard.theme import AMBER, GREEN, RED
-from src.dashboard.components.charts import feature_importance_bar
+from src.dashboard.theme import AMBER, GREEN, RED, SURFACE, BORDER, MUTED, TEXT, PLOTLY_TEMPLATE
 
 
-def _load_registered_models() -> list[dict]:
-    """Try to load model registry entries."""
+def _load_registry_data() -> tuple[list[dict], dict]:
+    """Load all registered models and group by ticker."""
     try:
         from src.models.registry import ModelRegistry
         reg   = ModelRegistry()
         names = reg.list_models()
         rows  = []
+        by_ticker: dict = defaultdict(list)
         for name in names:
             info = reg.get_latest_info(name)
+            parts = name.rsplit("_", 1)
+            ticker   = parts[0] if len(parts) == 2 else name
+            model_tp = parts[1].upper() if len(parts) == 2 else "?"
+            by_ticker[ticker].append(model_tp)
             if info:
                 m = info.get("metrics", {})
                 rows.append({
-                    "Model":   name,
-                    "Version": info.get("version", "v1"),
-                    "Sharpe":  round(m.get("sharpe", m.get("val_acc", 0.0)), 3),
-                    "Status":  "champion" if info.get("is_champion") else "registered",
+                    "Ticker":   ticker,
+                    "Model":    model_tp,
+                    "Name":     name,
+                    "Version":  info.get("version", "v1"),
+                    "Val Acc":  round(m.get("val_acc", 0.0), 3),
+                    "Status":   "champion" if info.get("is_champion") else "registered",
                 })
-        return rows
+        return rows, dict(by_ticker)
     except Exception:
-        return []
+        return [], {}
+
+
+def _load_backtest_sharpes() -> dict[str, float]:
+    """Load per-ticker Sharpe from latest backtest results."""
+    try:
+        from src.config.constants import PROJECT_ROOT
+        results_dir = PROJECT_ROOT / "data" / "backtest_results"
+        files = sorted(results_dir.glob("*.json")) if results_dir.exists() else []
+        if not files:
+            return {}
+        with open(files[-1]) as f:
+            data = json.load(f)
+        folds = data.get("folds", [])
+        if not folds:
+            return {}
+        df = pd.DataFrame(folds)
+        if "Ticker" not in df.columns or "Sharpe" not in df.columns:
+            return {}
+        df["Sharpe"] = pd.to_numeric(df["Sharpe"], errors="coerce")
+        return df.groupby("Ticker")["Sharpe"].mean().to_dict()
+    except Exception:
+        return {}
 
 
 def _get_feature_importance(model_name: str) -> pd.Series | None:
-    """Try to load feature importance for a registered model."""
     try:
         from src.models.registry import ModelRegistry
         reg   = ModelRegistry()
@@ -54,76 +83,100 @@ def _get_feature_importance(model_name: str) -> pd.Series | None:
     return None
 
 
-def _get_feature_importance_from_rf(ticker: str = "SPY") -> pd.Series | None:
-    """Train a quick RF and get feature importance from real data."""
-    try:
-        from src.data.pipeline.storage import load_features
-        from src.data.features.engineer import get_feature_columns
-        from src.models.classical.random_forest import RandomForestModel
-
-        df = load_features(ticker)
-        if df is None or len(df) < 200:
-            return None
-
-        feat_cols = get_feature_columns(df)
-        X = df[feat_cols].fillna(0)
-        y = df["target_1d"].fillna(0).astype(int) if "target_1d" in df.columns else pd.Series(0, index=X.index)
-
-        split = int(len(X) * 0.8)
-        rf    = RandomForestModel(n_estimators=100, max_depth=6)
-        rf.fit(X.iloc[:split], y.iloc[:split], X.iloc[split:], y.iloc[split:])
-        return rf.get_feature_importance().nlargest(20)
-    except Exception:
-        return None
-
-
 def render():
     st.markdown(
-        f'<h2 style="color:{AMBER};font-family:Consolas">MODEL PERFORMANCE</h2>',
+        f'<h2 style="color:{AMBER};font-family:Consolas;letter-spacing:.12em">MODEL PERFORMANCE</h2>',
         unsafe_allow_html=True,
     )
 
-    # Try real registry data first
-    reg_rows = _load_registered_models()
+    rows, by_ticker = _load_registry_data()
+    sharpes = _load_backtest_sharpes()
 
-    if reg_rows:
-        model_df = pd.DataFrame(reg_rows)
-        st.success(f"Loaded {len(reg_rows)} registered model(s) from ModelRegistry.")
-        st.dataframe(model_df, use_container_width=True, hide_index=True)
+    if not rows:
+        st.info("No models trained yet. Run `python scripts/train_models.py --register` to train.")
+        return
 
-        selected_model = st.selectbox("View Feature Importance", model_df["Model"].tolist())
-        fi = _get_feature_importance(selected_model)
-    else:
-        st.info("No models trained yet. Run `python scripts/train_models.py --register` to train models.")
-        # Show known model names as placeholders
-        model_stats = pd.DataFrame({
-            "Model":   ["XGBoost", "LightGBM", "RandomForest", "LSTM", "TCN", "PatchTST", "PPO"],
-            "Sharpe":  ["--"] * 7,
-            "Status":  ["not trained"] * 7,
+    model_df = pd.DataFrame(rows)
+    # Enrich with backtest Sharpe
+    model_df["Sharpe (WFO)"] = model_df["Ticker"].map(sharpes).round(3)
+
+    # ── Training status summary ──────────────────────────────────────────────
+    total_universe = 25
+    complete = [t for t, mods in by_ticker.items() if len(mods) >= 3]
+    partial  = [t for t, mods in by_ticker.items() if 0 < len(mods) < 3]
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Fully Trained",   len(complete))
+    c2.metric("In Progress",     len(partial))
+    c3.metric("Total Models",    len(rows))
+    c4.metric("Universe",        f"{len(complete)}/{total_universe}")
+    st.progress(len(complete) / total_universe,
+                text=f"Training progress: {len(complete)}/{total_universe} tickers complete")
+    st.markdown("---")
+
+    # ── Ticker-level summary ─────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:6px">'
+        f'TICKER SUMMARY</div>',
+        unsafe_allow_html=True,
+    )
+
+    ticker_rows = []
+    for ticker in sorted(by_ticker.keys()):
+        mods = by_ticker[ticker]
+        ticker_rows.append({
+            "Ticker":    ticker,
+            "Models":    " / ".join(sorted(mods)),
+            "Complete":  "✓" if len(mods) >= 3 else f"{len(mods)}/3",
+            "Sharpe (WFO)": round(sharpes.get(ticker, float("nan")), 2) if ticker in sharpes else "—",
         })
-        st.dataframe(model_stats, use_container_width=True, hide_index=True)
 
-        selected_model = st.selectbox("Compute Feature Importance From",
-                                      [t for t in ["SPY", "QQQ", "AAPL", "GLD", "TLT"]])
-        fi = None
+    ticker_df = pd.DataFrame(ticker_rows)
 
-    # Feature importance
-    st.markdown(f'<div style="color:{AMBER};font-family:Consolas;margin-top:12px">FEATURE IMPORTANCE</div>',
-                unsafe_allow_html=True)
+    def _color_sharpe(val):
+        try:
+            v = float(val)
+            if v >= 1.5:
+                return f"color:{GREEN}"
+            if v >= 0.5:
+                return f"color:{AMBER}"
+            return f"color:{RED}"
+        except Exception:
+            return f"color:{MUTED}"
 
-    if fi is None:
-        # Try computing from disk data
-        ticker = selected_model if selected_model in ["SPY", "QQQ", "AAPL", "GLD", "TLT"] else "SPY"
-        with st.spinner("Computing feature importance from disk data..."):
-            fi = _get_feature_importance_from_rf(ticker)
+    styled = ticker_df.style.map(_color_sharpe, subset=["Sharpe (WFO)"])
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+
+    # ── Per-model detail + Feature Importance ────────────────────────────────
+    st.markdown(
+        f'<div style="color:{AMBER};font-family:Consolas;font-weight:700;margin-bottom:6px">'
+        f'FEATURE IMPORTANCE</div>',
+        unsafe_allow_html=True,
+    )
+
+    ticker_filter = st.selectbox("Select Ticker", sorted(by_ticker.keys()))
+    available_models = [r["Name"] for r in rows if r["Ticker"] == ticker_filter]
+    selected_model   = st.selectbox("Select Model", available_models)
+
+    with st.spinner(f"Loading feature importance for {selected_model}..."):
+        fi = _get_feature_importance(selected_model)
 
     if fi is not None and len(fi) > 0:
+        from src.dashboard.components.charts import feature_importance_bar
         st.plotly_chart(
-            feature_importance_bar(fi, title=f"Feature Importance (RandomForest on {selected_model})"),
+            feature_importance_bar(fi, title=f"Top 20 Features — {selected_model}"),
             use_container_width=True,
         )
     else:
-        st.info("Feature importance will be available after data is downloaded and models are trained.")
+        st.info("Feature importance not available for this model.")
+
+    # ── All models table ─────────────────────────────────────────────────────
+    with st.expander("All Registered Models (detailed)"):
+        display_cols = ["Name", "Version", "Val Acc", "Sharpe (WFO)", "Status"]
+        available = [c for c in display_cols if c in model_df.columns]
+        st.dataframe(model_df[available], use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
