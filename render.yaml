@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: algotrade-x-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run src/dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_BASE_URL
+        value: https://paper-api.alpaca.markets
+      - key: NEWS_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+    plan: free
+    healthCheckPath: /
+
+  - type: web
+    name: algotrade-x-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_BASE_URL
+        value: https://paper-api.alpaca.markets
+      - key: NEWS_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+    plan: free
+    healthCheckPath: /health
