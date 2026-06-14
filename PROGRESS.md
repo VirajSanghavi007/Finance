@@ -51,9 +51,9 @@
 - https://github.com/VirajSanghavi007/Finance (all code pushed, no .env)
 - Latest commit: dashboard upgrades + stacker-based backtest
 
-### Render Deployment
-- render.yaml created — deploy from Render.com dashboard
-- Connect GitHub repo, auto-deploys on push
+### Deployment
+- Streamlit Community Cloud: share.streamlit.io → repo `VirajSanghavi007/Finance` → `src/dashboard/app.py`
+- ngrok (local): `python scripts/start_public.py`
 
 ---
 
