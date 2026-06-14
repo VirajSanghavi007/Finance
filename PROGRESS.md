@@ -1,7 +1,7 @@
 # AlgoTrade-X Build Progress
 
 ## Status: ALL PHASES COMPLETE + TRAINING IN PROGRESS
-## Last updated: 2026-06-13
+## Last updated: 2026-06-14 2026-06-13
 ## Test suite: 144 passed, 0 failed
 
 ---
@@ -10,31 +10,31 @@
 
 | Ticker | RF | XGB | LGBM | Stacker | Backtest Sharpe |
 |--------|-----|-----|------|---------|----------------|
-| SPY    | ✓ | ✓ | ✓ | ✓ | 1.57 |
-| QQQ    | ✓ | ✓ | ✓ | ✓ | 2.86 |
-| AAPL   | ✓ | ✓ | ✓ | ✓ | 1.74 |
-| MSFT   | ✓ | ✓ | ✓ | ✓ | 2.62 |
-| NVDA   | ✓ | ✓ | ✓ | ✓ | 2.82 |
-| GOOGL  | ✓ | ✓ | ✓ | ✓ | 3.09 |
-| AMZN   | ✓ | ✓ | ✓ | ✓ | 2.94 |
-| META   | ✓ | ✓ | ✓ | ✓ | 3.45 |
-| JPM    | ✓ | training | - | - | - |
-| GS     | queued | - | - | - | - |
-| XOM    | queued | - | - | - | - |
-| BRK-B  | queued | - | - | - | - |
-| XLF    | queued | - | - | - | - |
-| XLK    | queued | - | - | - | - |
-| XLE    | queued | - | - | - | - |
-| XLV    | queued | - | - | - | - |
-| XLI    | queued | - | - | - | - |
-| ^VIX   | queued | - | - | - | - |
-| ^TNX   | queued | - | - | - | - |
-| GLD    | queued | - | - | - | - |
-| TLT    | queued | - | - | - | - |
-| BTC_USDT | queued | - | - | - | - |
-| ETH_USDT | queued | - | - | - | - |
-| SOL_USDT | queued | - | - | - | - |
-| BNB_USDT | queued | - | - | - | - |
+| AAPL       | ✓ | ✓ | ✓ | ✓ | 1.74 |
+| AMZN       | ✓ | ✓ | ✓ | ✓ | 2.94 |
+| BNB_USDT   | ✓ | ✓ | ✓ | ✓ | 2.64 |
+| BRK-B      | ✓ | ✓ | ✓ | ✓ | 2.13 |
+| BTC_USDT   | ✓ | ✓ | ✓ | ✓ | 3.46 |
+| ETH_USDT   | ✓ | ✓ | ✓ | ✓ | 3.44 |
+| GLD        | ✓ | ✓ | ✓ | ✓ | 1.57 |
+| GOOGL      | ✓ | ✓ | ✓ | ✓ | 3.09 |
+| GS         | ✓ | ✓ | ✓ | ✓ | 2.19 |
+| JPM        | ✓ | ✓ | ✓ | ✓ | 1.34 |
+| META       | ✓ | ✓ | ✓ | ✓ | 3.45 |
+| MSFT       | ✓ | ✓ | ✓ | ✓ | 2.62 |
+| NVDA       | ✓ | ✓ | ✓ | ✓ | 2.82 |
+| QQQ        | ✓ | ✓ | ✓ | ✓ | 2.86 |
+| SOL_USDT   | ✓ | ✓ | ✓ | ✓ | 2.79 |
+| SPY        | ✓ | ✓ | ✓ | ✓ | 1.57 |
+| TLT        | ✓ | ✓ | ✓ | ✓ | 1.76 |
+| XLE        | ✓ | ✓ | ✓ | ✓ | 2.83 |
+| XLF        | ✓ | ✓ | ✓ | ✓ | 2.30 |
+| XLI        | ✓ | ✓ | ✓ | ✓ | 2.77 |
+| XLK        | ✓ | ✓ | ✓ | ✓ | 2.77 |
+| XLV        | ✓ | ✓ | ✓ | ✓ | 2.95 |
+| XOM        | ✓ | ✓ | ✓ | ✓ | 1.42 |
+| ^TNX       | ✓ | ✓ | ✓ | ✓ | 1.28 |
+| ^VIX       | ✓ | ✓ | ✓ | ✓ | 1.66 |
 
 ### Backtest Results (8 tickers with stacker ensemble, 2026-06-13)
 - **Mean Sharpe: 2.64** | Median Sharpe: 2.84 | **100% positive Sharpe** | **100% Sharpe ≥ 1.0**
