@@ -12,7 +12,16 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+import os
 import streamlit as st
+
+# Inject Streamlit Cloud secrets into os.environ so pydantic-settings picks them up
+try:
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, str) and _k not in os.environ:
+            os.environ[_k] = _v
+except Exception:
+    pass
 
 from src.dashboard.theme import BASE, SURFACE, BORDER, AMBER, TEXT
 

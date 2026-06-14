@@ -56,3 +56,4 @@ sqlalchemy==2.0.50
 tqdm==4.68.2
 beautifulsoup4==4.15.0
 lxml==6.1.1
+pyngrok>=7.0
