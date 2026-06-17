@@ -42,7 +42,7 @@ class Settings(BaseSettings):
 
     # SEC EDGAR user-agent (required by SEC)
     sec_user_agent: str = Field(
-        default="AlgoTradeX contact@algotradex.local",
+        default="AlgoTrade contact@algotrade.local",
         alias="SEC_USER_AGENT",
     )
 

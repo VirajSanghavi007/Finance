@@ -1,4 +1,4 @@
-"""Reusable Plotly chart components for AlgoTrade-X dashboard."""
+"""Reusable Plotly chart components for AlgoTrade dashboard."""
 from __future__ import annotations
 
 import numpy as np

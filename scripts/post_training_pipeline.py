@@ -175,7 +175,7 @@ def main() -> None:
     complete = [t for t, v in by_ticker.items() if len(v) >= 3]
     partial  = [(t, len(v)) for t, v in by_ticker.items() if 0 < len(v) < 3]
 
-    print(f"\nAlgoTrade-X Post-Training Pipeline")
+    print(f"\nAlgoTrade Post-Training Pipeline")
     print(f"  Tickers with all 3 models: {len(complete)}")
     print(f"  Tickers in progress: {len(partial)}")
     if partial:

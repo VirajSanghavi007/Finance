@@ -125,7 +125,7 @@ def run_full_download(
 
 def print_summary(summary: dict) -> None:
     print("\n" + "=" * 60)
-    print("  AlgoTrade-X  --  Data Download Summary")
+    print("  AlgoTrade  --  Data Download Summary")
     print("=" * 60)
 
     eq_ok = sum(1 for v in summary["equities"].values() if v > 0)

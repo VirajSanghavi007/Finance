@@ -1,4 +1,4 @@
-"""Bloomberg-inspired color palette and Plotly theme for AlgoTrade-X."""
+"""Bloomberg-inspired color palette and Plotly theme for AlgoTrade."""
 from __future__ import annotations
 
 import plotly.graph_objects as go

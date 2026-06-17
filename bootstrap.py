@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AlgoTrade-X Bootstrap Entry Point
+AlgoTrade Bootstrap Entry Point
 ===================================
 Run this first. It will:
   1. Check / prompt for API keys
@@ -54,7 +54,7 @@ def check_and_prompt_keys(settings) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AlgoTrade-X Bootstrap")
+    parser = argparse.ArgumentParser(description="AlgoTrade Bootstrap")
     parser.add_argument("--skip-news",     action="store_true", help="Skip NewsAPI download")
     parser.add_argument("--skip-sec",      action="store_true", help="Skip SEC EDGAR download")
     parser.add_argument("--skip-crypto",   action="store_true", help="Skip crypto download (requires ccxt)")
@@ -66,7 +66,7 @@ def main() -> None:
     logger = get_logger("bootstrap")
 
     print("\n" + "=" * 60)
-    print("  AlgoTrade-X  --  Bootstrap")
+    print("  AlgoTrade  --  Bootstrap")
     print("=" * 60)
 
     settings = get_settings()

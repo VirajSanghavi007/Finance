@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="AlgoTrade-X API",
+        title="AlgoTrade API",
         description="Production-grade algorithmic trading platform",
         version=_VERSION,
         lifespan=lifespan,

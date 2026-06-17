@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-rem AlgoTrade-X - Start Backend + Frontend on Windows.
+rem AlgoTrade - Start Backend + Frontend on Windows.
 rem Usage: double-click this file or run launchers\start.bat.
 
 set "PROJECT_DIR=%~dp0.."
@@ -38,9 +38,9 @@ if errorlevel 1 (
 echo.
 echo [1/3] Starting API backend on port %API_PORT%...
 if exist "%VENV_UVICORN%" (
-    start "AlgoTrade-X API" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_UVICORN%" src.api.main:app --host 0.0.0.0 --port %API_PORT%"
+    start "AlgoTrade API" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_UVICORN%" src.api.main:app --host 0.0.0.0 --port %API_PORT%"
 ) else (
-    start "AlgoTrade-X API" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_PYTHON%" -m uvicorn src.api.main:app --host 0.0.0.0 --port %API_PORT%"
+    start "AlgoTrade API" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_PYTHON%" -m uvicorn src.api.main:app --host 0.0.0.0 --port %API_PORT%"
 )
 
 echo [2/3] Waiting for API to be ready...
@@ -70,9 +70,9 @@ echo [OK]  API is up and healthy after %ELAPSED%s.
 :START_DASH
 echo [3/3] Starting Streamlit dashboard on port %DASH_PORT%...
 if exist "%VENV_STREAMLIT%" (
-    start "AlgoTrade-X Dashboard" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_STREAMLIT%" run src/dashboard/app.py --server.port %DASH_PORT% --server.address localhost --server.headless false"
+    start "AlgoTrade Dashboard" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_STREAMLIT%" run src/dashboard/app.py --server.port %DASH_PORT% --server.address localhost --server.headless false"
 ) else (
-    start "AlgoTrade-X Dashboard" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_PYTHON%" -m streamlit run src/dashboard/app.py --server.port %DASH_PORT% --server.address localhost --server.headless false"
+    start "AlgoTrade Dashboard" cmd /k "cd /d "%PROJECT_DIR%" && "%VENV_PYTHON%" -m streamlit run src/dashboard/app.py --server.port %DASH_PORT% --server.address localhost --server.headless false"
 )
 
 timeout /t 4 /nobreak >nul
@@ -95,7 +95,7 @@ if not "%FIREFOX%"=="" (
 )
 
 echo.
-echo AlgoTrade-X is running
+echo AlgoTrade is running
 echo API:        http://localhost:%API_PORT%
 echo Dashboard:  http://localhost:%DASH_PORT%
 echo API docs:   http://localhost:%API_PORT%/docs

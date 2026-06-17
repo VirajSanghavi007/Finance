@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# AlgoTrade-X - Start Backend + Frontend on Linux / macOS.
+# AlgoTrade - Start Backend + Frontend on Linux / macOS.
 # Usage: bash launchers/start.sh
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -66,7 +66,7 @@ run_streamlit="$VENV_PYTHON -m streamlit"
 [[ -x "$VENV_STREAMLIT" ]] && run_streamlit="$VENV_STREAMLIT"
 
 info "Starting API backend on port ${API_PORT}..."
-open_terminal "AlgoTrade-X API" \
+open_terminal "AlgoTrade API" \
     "$run_uvicorn src.api.main:app --host 0.0.0.0 --port ${API_PORT}"
 
 info "Waiting for API to be ready (max ${MAX_WAIT}s)..."
@@ -84,7 +84,7 @@ done
 (( elapsed < MAX_WAIT )) && ok "API is healthy after ${elapsed}s."
 
 info "Starting Streamlit dashboard on port ${DASH_PORT}..."
-open_terminal "AlgoTrade-X Dashboard" \
+open_terminal "AlgoTrade Dashboard" \
     "$run_streamlit run src/dashboard/app.py --server.port ${DASH_PORT} --server.address localhost --server.headless false"
 
 sleep 4
@@ -104,7 +104,7 @@ else
 fi
 
 echo ""
-echo -e "${AMBER}AlgoTrade-X is running${NC}"
+echo -e "${AMBER}AlgoTrade is running${NC}"
 echo "API:        http://localhost:${API_PORT}"
 echo "Dashboard:  http://localhost:${DASH_PORT}"
 echo "API docs:   http://localhost:${API_PORT}/docs"

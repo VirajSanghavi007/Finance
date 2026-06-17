@@ -1,4 +1,4 @@
-# AlgoTrade-X — Launchers
+# AlgoTrade — Launchers
 
 One-click scripts that start the API backend, wait for it to be healthy, then start the Streamlit dashboard and open it in your browser.
 

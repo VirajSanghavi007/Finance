@@ -1,5 +1,5 @@
 """
-AlgoTrade-X Dashboard -- Bloomberg-inspired terminal UI.
+AlgoTrade Dashboard -- Bloomberg-inspired terminal UI.
 Run: streamlit run src/dashboard/app.py
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ except Exception:
 from src.dashboard.theme import BASE, SURFACE, BORDER, AMBER, TEXT
 
 st.set_page_config(
-    page_title="AlgoTrade-X",
+    page_title="AlgoTrade",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -62,7 +62,7 @@ st.markdown(
 with st.sidebar:
     st.markdown(
         f'<div style="color:{AMBER};font-size:18px;font-weight:700;'
-        f'font-family:Consolas;letter-spacing:2px;padding:10px 0">ALGOTRADE-X</div>',
+        f'font-family:Consolas;letter-spacing:2px;padding:10px 0">ALGOTRADE</div>',
         unsafe_allow_html=True,
     )
     st.markdown(f'<div style="color:#757575;font-size:10px">v0.1.0 | Bloomberg-Style Terminal</div>',

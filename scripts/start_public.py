@@ -52,7 +52,7 @@ def main() -> None:
 
     print(f"""
 ╔══════════════════════════════════════════════════════╗
-║         AlgoTrade-X — LIVE PUBLIC URL                ║
+║         AlgoTrade — LIVE PUBLIC URL                ║
 ║                                                      ║
 ║  {public_url:<52}║
 ║                                                      ║

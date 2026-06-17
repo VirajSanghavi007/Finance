@@ -233,7 +233,7 @@ def main() -> None:
     settings = get_settings()
     tickers = [t.upper() for t in args.tickers]
 
-    print(f"\nAlgoTrade-X Paper Trader")
+    print(f"\nAlgoTrade Paper Trader")
     print(f"  Tickers : {', '.join(tickers)}")
     print(f"  Interval: {args.interval}s")
     print(f"  Alpaca  : {'connected' if settings.alpaca_api_key else 'no key -- signals only'}")

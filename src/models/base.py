@@ -18,7 +18,7 @@ class ModelPrediction:
 
 
 class BaseModel(ABC):
-    """Abstract interface all AlgoTrade-X models must implement."""
+    """Abstract interface all AlgoTrade models must implement."""
 
     @abstractmethod
     def fit(
